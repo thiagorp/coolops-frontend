@@ -15,6 +15,16 @@ noop =
     return
 
 
+processCmds : List (Cmd msg) -> Cmd msg
+processCmds cmds =
+    case cmds of
+        [] ->
+            Cmd.none
+
+        list ->
+            Cmd.batch list
+
+
 andPerform : Cmd msg -> PageHandler model msg -> PageHandler model msg
 andPerform newCommand ( model, commands ) =
     ( model, newCommand :: commands )

@@ -1,44 +1,60 @@
 module App.Main exposing (..)
 
+import App.Fragments.Topbar as Topbar
 import App.Pages.NotFound as NotFound
 import App.Pages.ProjectsList as ProjectsList
 import Html
 import Navigation
 import Route
+import Util
 
 
 type Msg
     = UrlChanged Navigation.Location
     | ProjectsListMsg ProjectsList.Msg
+    | TopbarMsg Topbar.Msg
+
+
+type Content
+    = ProjectsList ProjectsList.Model
 
 
 type Page
     = NotFound
-    | ProjectsList ProjectsList.Model
+    | App Topbar.Model Content
 
 
 type alias Model =
     { page : Page }
 
 
-wrapPage : (model -> Page) -> (msg -> Msg) -> Model -> ( model, List (Cmd msg) ) -> ( Model, Cmd Msg )
-wrapPage toPage toMsg model ( subModel, subCmds ) =
+wrapTopbar : Model -> Content -> Cmd Msg -> ( Topbar.Model, List (Cmd Topbar.Msg) ) -> ( Model, Cmd Msg )
+wrapTopbar model content cmds ( subModel, subCmds ) =
     let
-        subCmd =
-            case subCmds of
-                [] ->
-                    Cmd.none
-
-                cmds ->
-                    Cmd.batch subCmds
-
         cmd =
-            Cmd.map toMsg subCmd
-
-        page =
-            toPage subModel
+            Util.processCmds subCmds
+                |> Cmd.map TopbarMsg
     in
-    ( { model | page = page }, cmd )
+    ( { model | page = App subModel content }, Cmd.batch [ cmd, cmds ] )
+
+
+wrapPage : (model -> Content) -> (msg -> Msg) -> Model -> ( model, List (Cmd msg) ) -> ( Model, Cmd Msg )
+wrapPage toContent toMsg model ( subModel, subCmds ) =
+    let
+        cmd =
+            Util.processCmds subCmds
+                |> Cmd.map toMsg
+
+        content =
+            toContent subModel
+    in
+    case model.page of
+        App topbar _ ->
+            ( { model | page = App topbar content }, cmd )
+
+        NotFound ->
+            Topbar.init
+                |> wrapTopbar model content cmd
 
 
 setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
@@ -58,20 +74,37 @@ init =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model.page ) of
-        ( UrlChanged location, _ ) ->
+    case msg of
+        UrlChanged location ->
             setPage model location
 
-        _ ->
+        ProjectsListMsg _ ->
             ( model, Cmd.none )
 
+        TopbarMsg subMsg ->
+            case model.page of
+                App subModel content ->
+                    Topbar.update subMsg subModel
+                        |> wrapTopbar model content Cmd.none
 
-inLayout : Html.Html Msg -> Html.Html Msg
-inLayout page =
+                NotFound ->
+                    ( model, Cmd.none )
+
+
+inLayout : Topbar.Model -> Html.Html Msg -> Html.Html Msg
+inLayout tobarModel page =
     Html.div []
-        [ Html.h1 [] [ Html.text "Layout" ]
+        [ tobarModel |> Topbar.view |> Html.map TopbarMsg
         , page
         ]
+
+
+contentView : Content -> Html.Html Msg
+contentView content =
+    case content of
+        ProjectsList subModel ->
+            ProjectsList.view subModel
+                |> Html.map ProjectsListMsg
 
 
 view : Model -> Html.Html Msg
@@ -80,10 +113,9 @@ view model =
         NotFound ->
             NotFound.view
 
-        ProjectsList subModel ->
-            ProjectsList.view subModel
-                |> Html.map ProjectsListMsg
-                |> inLayout
+        App tobar content ->
+            contentView content
+                |> inLayout tobar
 
 
 main : Program Never Model Msg
