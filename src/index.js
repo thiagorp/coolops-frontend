@@ -12,4 +12,9 @@ app.ports.login.subscribe(function(token) {
   app.ports.onSessionChange.send(token);
 });
 
+app.ports.logout.subscribe(function() {
+  localStorage.removeItem('accessToken');
+  app.ports.onSessionChange.send(null);
+});
+
 registerServiceWorker();

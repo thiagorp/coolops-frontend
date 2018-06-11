@@ -117,6 +117,10 @@ update msg model =
             Public.update subMsg subModel
                 |> wrapPage Public PublicMsg model
 
+        ( AppMsg subMsg, App subModel ) ->
+            App.update subMsg subModel
+                |> wrapPage App AppMsg model
+
         _ ->
             ( model, Cmd.none )
 
