@@ -6,6 +6,7 @@ import UrlParser as Url exposing ((</>), (<?>), int, s, stringParam, top)
 
 type ProtectedRoute
     = ProjectsList
+    | NewProject
 
 
 type OpenRoute
@@ -26,20 +27,6 @@ openRoot =
 protectedRoot : Route
 protectedRoot =
     Protected ProjectsList
-
-
-openRouteParser : Url.Parser (OpenRoute -> a) a
-openRouteParser =
-    Url.oneOf
-        [ Url.map Signup (s "signup")
-        , Url.map Login (s "login")
-        ]
-
-
-procetedRouteParser : Url.Parser (ProtectedRoute -> a) a
-procetedRouteParser =
-    Url.oneOf
-        [ Url.map ProjectsList top ]
 
 
 redirectTo : Route -> Cmd msg
@@ -84,11 +71,30 @@ readProtectedRoute =
     Url.parsePath procetedRouteParser
 
 
+openRouteParser : Url.Parser (OpenRoute -> a) a
+openRouteParser =
+    Url.oneOf
+        [ Url.map Signup (s "signup")
+        , Url.map Login (s "login")
+        ]
+
+
+procetedRouteParser : Url.Parser (ProtectedRoute -> a) a
+procetedRouteParser =
+    Url.oneOf
+        [ Url.map ProjectsList top
+        , Url.map NewProject (s "projects" </> s "new")
+        ]
+
+
 toUrl : Route -> String
 toUrl route =
     case route of
         Protected ProjectsList ->
             "/"
+
+        Protected NewProject ->
+            "/projects/new"
 
         Open Signup ->
             "/signup"
