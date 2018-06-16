@@ -1,6 +1,7 @@
 module App.Main exposing (..)
 
 import App.Fragments.Topbar as Topbar
+import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
 import App.Pages.ProjectsList as ProjectsList
 import Html
@@ -12,11 +13,13 @@ import Util
 type Msg
     = UrlChanged Navigation.Location
     | ProjectsListMsg ProjectsList.Msg
+    | NewProjectMsg NewProject.Msg
     | TopbarMsg Topbar.Msg
 
 
 type Content
     = ProjectsList ProjectsList.Model
+    | NewProject NewProject.Model
 
 
 type Page
@@ -25,7 +28,7 @@ type Page
 
 
 type alias Model =
-    { page : Page }
+    { page : Page, apiToken : String }
 
 
 wrapTopbar : Model -> Content -> Cmd Msg -> ( Topbar.Model, List (Cmd Topbar.Msg) ) -> ( Model, Cmd Msg )
@@ -61,15 +64,20 @@ setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
 setPage model location =
     case Route.readProtectedRoute location of
         Nothing ->
-            ( { page = NotFound }, Cmd.none )
+            ( { model | page = NotFound }, Cmd.none )
 
         Just Route.ProjectsList ->
-            wrapPage ProjectsList ProjectsListMsg model ProjectsList.init
+            ProjectsList.init model.apiToken
+                |> wrapPage ProjectsList ProjectsListMsg model
+
+        Just Route.NewProject ->
+            NewProject.init model.apiToken
+                |> wrapPage NewProject NewProjectMsg model
 
 
-init : Navigation.Location -> ( Model, Cmd Msg )
-init =
-    setPage (Model NotFound)
+init : String -> Navigation.Location -> ( Model, Cmd Msg )
+init apiToken =
+    setPage (Model NotFound apiToken)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -78,8 +86,23 @@ update msg model =
         UrlChanged location ->
             setPage model location
 
-        ProjectsListMsg _ ->
-            ( model, Cmd.none )
+        ProjectsListMsg subMsg ->
+            case model.page of
+                App _ (ProjectsList subModel) ->
+                    ProjectsList.update subMsg subModel
+                        |> wrapPage ProjectsList ProjectsListMsg model
+
+                _ ->
+                    ( model, Cmd.none )
+
+        NewProjectMsg subMsg ->
+            case model.page of
+                App _ (NewProject subModel) ->
+                    NewProject.update subMsg subModel
+                        |> wrapPage NewProject NewProjectMsg model
+
+                _ ->
+                    ( model, Cmd.none )
 
         TopbarMsg subMsg ->
             case model.page of
@@ -106,6 +129,10 @@ contentView content =
             ProjectsList.view subModel
                 |> Html.map ProjectsListMsg
 
+        NewProject subModel ->
+            NewProject.view subModel
+                |> Html.map NewProjectMsg
+
 
 view : Model -> Html.Html Msg
 view model =
@@ -118,9 +145,9 @@ view model =
                 |> inLayout tobar
 
 
-main : Program Never Model Msg
+main : Program String Model Msg
 main =
-    Navigation.program UrlChanged
+    Navigation.programWithFlags UrlChanged
         { view = view
         , init = init
         , update = update

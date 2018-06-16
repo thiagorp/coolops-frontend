@@ -61,8 +61,8 @@ setPage model location =
                 |> handleRoute model Route.protectedRoot
     in
     case ( model.page, model.token ) of
-        ( Transitioning, Just _ ) ->
-            App.init location
+        ( Transitioning, Just token ) ->
+            App.init token location
                 |> wrapPage App AppMsg model
                 |> handleProtectedRoute
 
