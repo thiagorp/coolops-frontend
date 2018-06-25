@@ -30,6 +30,19 @@ get token path expect =
         }
 
 
+delete : Token -> String -> Http.Request ()
+delete token path =
+    Http.request
+        { method = "DELETE"
+        , headers = [ authHeader token ]
+        , url = baseUrl ++ path
+        , body = Http.emptyBody
+        , expect = Http.expectStringResponse (\_ -> Ok ())
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
 post : Token -> String -> Http.Body -> Http.Request ()
 post token path body =
     Http.request

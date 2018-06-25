@@ -3,6 +3,8 @@ module App.Html exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Decode
+import Route exposing (..)
 
 
 container : List (Html msg) -> Html msg
@@ -24,8 +26,85 @@ actionButton : Action msg -> Html msg
 actionButton action =
     case action of
         Create buttonTitle clickHandler ->
-            button [ class "btn btn-success", onClick clickHandler ]
+            Html.button [ class "btn btn-success", onClick clickHandler ]
                 [ text buttonTitle ]
+
+
+type ButtonSize
+    = NormalSize
+    | Sm
+    | Lg
+
+
+type ButtonColor
+    = Primary
+    | Secondary
+    | Danger
+
+
+type ButtonIcon
+    = Slack
+
+
+type alias ButtonConfig =
+    { size : ButtonSize
+    , color : ButtonColor
+    , icon : Maybe ButtonIcon
+    , text : String
+    }
+
+
+buttonConfig : ButtonConfig
+buttonConfig =
+    { size = NormalSize
+    , color = Primary
+    , icon = Nothing
+    , text = ""
+    }
+
+
+button : msg -> ButtonConfig -> Html msg
+button msg config =
+    let
+        sizeAttr =
+            case config.size of
+                NormalSize ->
+                    []
+
+                Sm ->
+                    [ class "btn-sm" ]
+
+                Lg ->
+                    [ class "btn-lg" ]
+
+        colorAttr =
+            case config.color of
+                Primary ->
+                    [ class "btn-primary" ]
+
+                Secondary ->
+                    [ class "btn-secondary" ]
+
+                Danger ->
+                    [ class "btn-danger" ]
+
+        attributes =
+            [ class "btn", onClick msg, type_ "button" ] ++ sizeAttr ++ colorAttr
+
+        iconClass icon =
+            case icon of
+                Slack ->
+                    "fab fa-slack-hash mr-2"
+
+        icon =
+            case config.icon of
+                Nothing ->
+                    []
+
+                Just icon ->
+                    [ i [ class (iconClass icon) ] [] ]
+    in
+    Html.button attributes (icon ++ [ text config.text ])
 
 
 pageHeaderWithActions : String -> List (Action msg) -> Html msg
@@ -54,6 +133,17 @@ fullscreenCard children =
         [ div [ class "col-12" ]
             [ div [ class "card" ] children ]
         ]
+
+
+cardWithTitle : String -> List (Html msg) -> Html msg
+cardWithTitle title children =
+    div [ class "card" ]
+        ([ div [ class "card-header" ] [ h3 [ class "card-title" ] [ text title ] ] ] ++ children)
+
+
+cardBody : List (Html msg) -> Html msg
+cardBody children =
+    div [ class "card-body" ] children
 
 
 table : List (Html msg) -> Html msg
@@ -90,3 +180,71 @@ td =
 text : String -> Html msg
 text =
     Html.text
+
+
+img : String -> List (Attribute msg) -> Html msg
+img url customAttributes =
+    let
+        attributes =
+            customAttributes ++ [ src url ]
+    in
+    Html.img attributes []
+
+
+externalLink : String -> List (Attribute msg) -> List (Html msg) -> Html msg
+externalLink url customAttributes children =
+    let
+        attributes =
+            customAttributes ++ [ href url ]
+    in
+    Html.a attributes children
+
+
+a : Route -> (Route -> msg) -> List (Attribute msg) -> List (Html msg) -> Html msg
+a route msg customAttributes children =
+    let
+        attributes =
+            customAttributes
+                ++ [ href (toUrl route), onPreventDefaultClick (msg route) ]
+    in
+    Html.a attributes children
+
+
+
+-- See https://github.com/elm-lang/html/issues/110
+
+
+onPreventDefaultClick : msg -> Attribute msg
+onPreventDefaultClick message =
+    onWithOptions "click"
+        { defaultOptions | preventDefault = True }
+        (preventDefault2
+            |> Json.Decode.andThen (maybePreventDefault message)
+        )
+
+
+preventDefault2 : Json.Decode.Decoder Bool
+preventDefault2 =
+    Json.Decode.map2
+        invertedOr
+        (Json.Decode.field "ctrlKey" Json.Decode.bool)
+        (Json.Decode.field "metaKey" Json.Decode.bool)
+
+
+maybePreventDefault : msg -> Bool -> Json.Decode.Decoder msg
+maybePreventDefault msg preventDefault =
+    case preventDefault of
+        True ->
+            Json.Decode.succeed msg
+
+        False ->
+            Json.Decode.fail "Normal link"
+
+
+invertedOr : Bool -> Bool -> Bool
+invertedOr x y =
+    not (x || y)
+
+
+
+-- End https://github.com/elm-lang/html/issues/110

@@ -140,8 +140,8 @@ submitButton text loading =
     Html.button attributes [ Html.text text ]
 
 
-linearCardForm : FormConfig msg -> List (Input msg) -> Html.Html msg
-linearCardForm { error, loading, submitButtonText, msg } inputs =
+linearCardFormWithTitle : FormConfig msg -> Maybe String -> List (Input msg) -> Html.Html msg
+linearCardFormWithTitle { error, loading, submitButtonText, msg } maybeTitle inputs =
     let
         inputsHtml =
             List.map input inputs
@@ -157,6 +157,17 @@ linearCardForm { error, loading, submitButtonText, msg } inputs =
         button =
             [ submitButton submitButtonText loading ]
 
+        titleHtml =
+            case maybeTitle of
+                Nothing ->
+                    []
+
+                Just title ->
+                    [ Html.div
+                        [ Attr.class "card-header" ]
+                        [ Html.h3 [ Attr.class "card-title" ] [ Html.text title ] ]
+                    ]
+
         formBody =
             inputsHtml ++ errorHtml
     in
@@ -164,3 +175,8 @@ linearCardForm { error, loading, submitButtonText, msg } inputs =
         [ Html.div [ Attr.class "card-body" ] formBody
         , Html.div [ Attr.class "card-footer text-right" ] button
         ]
+
+
+linearCardForm : FormConfig msg -> List (Input msg) -> Html.Html msg
+linearCardForm config inputs =
+    linearCardFormWithTitle config Nothing inputs

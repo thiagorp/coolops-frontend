@@ -1,14 +1,17 @@
 module App.Fragments.Topbar exposing (Model, Msg, init, update, view)
 
+import App.Html as AppHtml
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Ports
+import Route
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type Msg
     = Toggle
+    | RedirectTo Route.Route
     | LogOut
 
 
@@ -35,17 +38,31 @@ update msg model =
                 |> toggleDropdown
                 |> return
 
+        RedirectTo route ->
+            model
+                |> toggleDropdown
+                |> return
+                |> andPerform (Route.redirectTo route)
+
         LogOut ->
             return model
                 |> andPerform (Ports.logout ())
 
 
-dropdownMenu : Html Msg
+dropdownMenu : List (Html Msg)
 dropdownMenu =
-    a [ class "dropdown-item", href "#", onClick LogOut ]
+    [ AppHtml.a (Route.Protected (Route.Settings Nothing))
+        RedirectTo
+        [ class "dropdown-item" ]
+        [ i [ class "dropdown-icon fe fe-settings" ] []
+        , text "Settings"
+        ]
+    , div [ class "dropdown-divider" ] []
+    , a [ class "dropdown-item", href "#", onClick LogOut ]
         [ i [ class "dropdown-icon fe fe-log-out" ] []
         , text "Sign out"
         ]
+    ]
 
 
 dropdown : Model -> Html Msg
@@ -69,7 +86,7 @@ dropdown model =
                 , ( "show", model.dropdownOpened )
                 ]
             ]
-            [ dropdownMenu ]
+            dropdownMenu
         ]
 
 

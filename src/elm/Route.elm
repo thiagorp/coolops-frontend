@@ -7,6 +7,7 @@ import UrlParser as Url exposing ((</>), (<?>), int, s, stringParam, top)
 type ProtectedRoute
     = ProjectsList
     | NewProject
+    | Settings (Maybe String)
 
 
 type OpenRoute
@@ -84,6 +85,7 @@ procetedRouteParser =
     Url.oneOf
         [ Url.map ProjectsList top
         , Url.map NewProject (s "projects" </> s "new")
+        , Url.map Settings (s "settings" <?> stringParam "code")
         ]
 
 
@@ -95,6 +97,9 @@ toUrl route =
 
         Protected NewProject ->
             "/projects/new"
+
+        Protected (Settings _) ->
+            "/settings"
 
         Open Signup ->
             "/signup"
