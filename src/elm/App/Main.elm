@@ -4,6 +4,7 @@ import App.Fragments.Topbar as Topbar
 import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
 import App.Pages.ProjectsList as ProjectsList
+import App.Pages.Settings as Settings
 import Html
 import Navigation
 import Route
@@ -14,12 +15,14 @@ type Msg
     = UrlChanged Navigation.Location
     | ProjectsListMsg ProjectsList.Msg
     | NewProjectMsg NewProject.Msg
+    | SettingsMsg Settings.Msg
     | TopbarMsg Topbar.Msg
 
 
 type Content
     = ProjectsList ProjectsList.Model
     | NewProject NewProject.Model
+    | Settings Settings.Model
 
 
 type Page
@@ -74,6 +77,10 @@ setPage model location =
             NewProject.init model.apiToken
                 |> wrapPage NewProject NewProjectMsg model
 
+        Just (Route.Settings code) ->
+            Settings.init model.apiToken code
+                |> wrapPage Settings SettingsMsg model
+
 
 init : String -> Navigation.Location -> ( Model, Cmd Msg )
 init apiToken =
@@ -100,6 +107,15 @@ update msg model =
                 App _ (NewProject subModel) ->
                     NewProject.update subMsg subModel
                         |> wrapPage NewProject NewProjectMsg model
+
+                _ ->
+                    ( model, Cmd.none )
+
+        SettingsMsg subMsg ->
+            case model.page of
+                App _ (Settings subModel) ->
+                    Settings.update subMsg subModel
+                        |> wrapPage Settings SettingsMsg model
 
                 _ ->
                     ( model, Cmd.none )
@@ -132,6 +148,10 @@ contentView content =
         NewProject subModel ->
             NewProject.view subModel
                 |> Html.map NewProjectMsg
+
+        Settings subModel ->
+            Settings.view subModel
+                |> Html.map SettingsMsg
 
 
 view : Model -> Html.Html Msg
