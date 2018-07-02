@@ -7,6 +7,8 @@ import UrlParser as Url exposing ((</>), (<?>), int, s, stringParam, top)
 type ProtectedRoute
     = ProjectsList
     | NewProject
+    | EditProject String
+    | NewEnvironment String
     | Settings (Maybe String)
 
 
@@ -97,6 +99,12 @@ toUrl route =
 
         Protected NewProject ->
             "/projects/new"
+
+        Protected (EditProject projectId) ->
+            "/projects/" ++ projectId ++ "/edit"
+
+        Protected (NewEnvironment projectId) ->
+            "/projects/" ++ projectId ++ "/environments/new"
 
         Protected (Settings _) ->
             "/settings"

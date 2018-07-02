@@ -77,6 +77,12 @@ setPage model location =
             NewProject.init model.apiToken
                 |> wrapPage NewProject NewProjectMsg model
 
+        Just (Route.EditProject _) ->
+            ( { model | page = NotFound }, Cmd.none )
+
+        Just (Route.NewEnvironment _) ->
+            ( { model | page = NotFound }, Cmd.none )
+
         Just (Route.Settings code) ->
             Settings.init model.apiToken code
                 |> wrapPage Settings SettingsMsg model
