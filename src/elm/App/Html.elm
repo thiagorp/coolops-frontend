@@ -42,14 +42,40 @@ type ButtonColor
     | Danger
 
 
-type ButtonIcon
+type Icon
     = Slack
+
+
+i : Icon -> List (Attribute msg) -> Html msg
+i iconType attrs =
+    let
+        iconClass =
+            case iconType of
+                Slack ->
+                    "fab fa-slack-hash"
+    in
+    Html.i ([ class iconClass ] ++ attrs) []
+
+
+type StatusIcon
+    = StatusIconSuccess
+
+
+statusIcon : StatusIcon -> Html msg
+statusIcon state =
+    let
+        bgClass =
+            case state of
+                StatusIconSuccess ->
+                    "bg-success"
+    in
+    Html.span [ class "status-icon", class bgClass ] []
 
 
 type alias ButtonConfig =
     { size : ButtonSize
     , color : ButtonColor
-    , icon : Maybe ButtonIcon
+    , icon : Maybe Icon
     , text : String
     }
 
@@ -91,18 +117,13 @@ button msg config =
         attributes =
             [ class "btn", onClick msg, type_ "button" ] ++ sizeAttr ++ colorAttr
 
-        iconClass icon =
-            case icon of
-                Slack ->
-                    "fab fa-slack-hash mr-2"
-
         icon =
             case config.icon of
                 Nothing ->
                     []
 
                 Just icon ->
-                    [ i [ class (iconClass icon) ] [] ]
+                    [ i icon [ class "mr-2" ] ]
     in
     Html.button attributes (icon ++ [ text config.text ])
 
@@ -113,6 +134,48 @@ pageHeaderWithActions title actions =
         [ h1 [ class "page-title" ] [ text title ]
         , div [ class "page-options d-flex" ]
             (List.map actionButton actions)
+        ]
+
+
+row : List (Html msg) -> Html msg
+row =
+    div [ class "row" ]
+
+
+type ColSize
+    = Full
+    | Half
+    | OneFourth
+    | OneThird
+
+
+type alias ColConfig =
+    { colSmSize : ColSize, colMdSize : ColSize, colLgSize : ColSize }
+
+
+colSize : ColSize -> String
+colSize size =
+    case size of
+        Full ->
+            "12"
+
+        Half ->
+            "6"
+
+        OneThird ->
+            "4"
+
+        OneFourth ->
+            "3"
+
+
+col : ColConfig -> List (Html msg) -> Html msg
+col { colSmSize, colMdSize, colLgSize } =
+    div
+        [ class "col"
+        , class ("col-sm-" ++ colSize colSmSize)
+        , class ("col-md-" ++ colSize colMdSize)
+        , class ("col-lg-" ++ colSize colLgSize)
         ]
 
 
@@ -148,8 +211,7 @@ cardBody children =
 
 table : List (Html msg) -> Html msg
 table children =
-    div [ class "table-responsive" ]
-        [ Html.table [ class "table table-hover table-outline table-vcenter text-nowrap card-table" ] children ]
+    Html.table [ class "table table-hover table-outline table-vcenter card-table" ] children
 
 
 thead : List (Html msg) -> Html msg
