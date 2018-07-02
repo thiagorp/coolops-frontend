@@ -20,7 +20,7 @@ type alias Model =
 
 init : String -> PageHandler Model Msg
 init apiToken =
-    return { projects = Success projects, apiToken = apiToken, loadedTime = Nothing }
+    return { projects = Loading, apiToken = apiToken, loadedTime = Nothing }
         |> andPerform (Task.perform TimeLoaded Time.now)
         |> andPerform (listProjects apiToken ProjectsResponse)
 
@@ -50,88 +50,6 @@ update msg model =
         TimeLoaded time ->
             { model | loadedTime = Just time }
                 |> return
-
-
-projects : List Project
-projects =
-    [ { id = "core"
-      , name = "Availability Service"
-      , deploymentImage = "docker/hello"
-      , environments =
-            [ { id = "core-produciton"
-              , name = "Production"
-              , currentDeployment =
-                    Just
-                        { id = "lalala"
-                        , build = { id = "lala", name = "master-512" }
-                        , startedAt = 1530403751710
-                        , status = Failed
-                        }
-              }
-            , { id = "core-staging"
-              , name = "Staging"
-              , currentDeployment =
-                    Just
-                        { id = "lalala"
-                        , build = { id = "lala", name = "very-long-branch-name-that-is-almost-impossible-4" }
-                        , startedAt = 1530423751710
-                        , status = Running
-                        }
-              }
-            ]
-      }
-    , { id = "core"
-      , name = "Core"
-      , deploymentImage = "docker/hello"
-      , environments =
-            [ { id = "core-produciton"
-              , name = "Production"
-              , currentDeployment =
-                    Just
-                        { id = "lalala"
-                        , build = { id = "lala", name = "master-4" }
-                        , startedAt = 1530473752710
-                        , status = Succeeded
-                        }
-              }
-            , { id = "core-staging"
-              , name = "Staging"
-              , currentDeployment = Nothing
-              }
-            ]
-      }
-    , { id = "core"
-      , name = "Customers Service"
-      , deploymentImage = "docker/hello"
-      , environments =
-            [ { id = "core-produciton"
-              , name = "Production"
-              , currentDeployment =
-                    Just
-                        { id = "lalala"
-                        , build = { id = "lala", name = "master-10" }
-                        , startedAt = 1530403751710
-                        , status = Succeeded
-                        }
-              }
-            , { id = "core-staging"
-              , name = "Staging"
-              , currentDeployment =
-                    Just
-                        { id = "lalala"
-                        , build = { id = "lala", name = "feature-branch-nice-feature-1" }
-                        , startedAt = 1530423751710
-                        , status = Queued
-                        }
-              }
-            ]
-      }
-    , { id = "core"
-      , name = "Reminder Service"
-      , deploymentImage = "docker/hello"
-      , environments = []
-      }
-    ]
 
 
 deploymentCol : Maybe Time -> Maybe Deployment -> List (Html msg)
