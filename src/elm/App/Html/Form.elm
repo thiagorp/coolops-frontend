@@ -5,6 +5,7 @@ module App.Html.Form
         , linearCardForm
         )
 
+import Dict exposing (Dict)
 import Html as Html
 import Html.Attributes as Attr
 import Html.Events as Events
@@ -25,10 +26,31 @@ type alias TextInputConfig msg =
     }
 
 
+type alias KeyValueInputConfig msg =
+    { label : String
+    , placeholder : { key : String, val : String }
+    , errors : { key : Maybe (List String), val : Maybe (List String) }
+    , disabled : Bool
+    , id : String
+    , events :
+        { onKeyChange : String -> msg
+        , onValueChange : String -> msg
+        , onEntryRemove : String -> msg
+        , onEntryEdit : String -> msg
+        , onEntryAdd : msg
+        }
+    , values :
+        { added : Dict String String
+        , editing : { key : String, val : String }
+        }
+    }
+
+
 type Input msg
     = TextInput (TextInputConfig msg)
     | EmailInput (TextInputConfig msg)
     | PasswordInput (TextInputConfig msg)
+    | KeyValueInput (KeyValueInputConfig msg)
 
 
 inputAttributeToHtml : InputAttribute msg -> Html.Attribute msg
@@ -101,6 +123,108 @@ textInputHtml inputType { label, placeholder, errors, disabled, attributes, id }
     Html.div [ Attr.class "form-group" ] elements
 
 
+keyValueInputHtml : KeyValueInputConfig msg -> Html.Html msg
+keyValueInputHtml config =
+    let
+        addedRow key val inputs =
+            inputs
+                ++ [ Html.div [ Attr.class "col col-12 col-lg-5" ]
+                        [ Html.div [ Attr.class "form-group" ]
+                            [ Html.input
+                                [ Attr.class "form-control"
+                                , Attr.value key
+                                , Attr.disabled True
+                                ]
+                                []
+                            ]
+                        ]
+                   , Html.div [ Attr.class "col col-12 col-lg-5" ]
+                        [ Html.div [ Attr.class "form-group" ]
+                            [ Html.input
+                                [ Attr.class "form-control"
+                                , Attr.value val
+                                , Attr.disabled True
+                                ]
+                                []
+                            ]
+                        ]
+                   , Html.div [ Attr.class "col col-12 col-lg-2" ]
+                        [ Html.div [ Attr.class "form-group" ]
+                            [ Html.button
+                                [ Attr.class "btn btn-icon btn-secondary mr-2"
+                                , Events.onClick (config.events.onEntryEdit key)
+                                , Attr.type_ "button"
+                                , Attr.disabled config.disabled
+                                ]
+                                [ Html.i [ Attr.class "fas fa-pencil-alt" ] [] ]
+                            , Html.button
+                                [ Attr.class "btn btn-icon btn-secondary"
+                                , Events.onClick (config.events.onEntryRemove key)
+                                , Attr.type_ "button"
+                                , Attr.disabled config.disabled
+                                ]
+                                [ Html.i [ Attr.class "far fa-trash-alt" ] [] ]
+                            ]
+                        ]
+                   ]
+
+        editingRow =
+            [ Html.div [ Attr.class "col col-12 col-lg-5" ]
+                [ Html.div [ Attr.class "form-group" ]
+                    ([ Html.input
+                        ([ Attr.class "form-control"
+                         , Attr.value config.values.editing.key
+                         , Attr.placeholder config.placeholder.key
+                         , Events.onInput config.events.onKeyChange
+                         , Attr.disabled config.disabled
+                         , Attr.id (config.id ++ "-key")
+                         ]
+                            |> addErrorClassToInput config.errors.key
+                        )
+                        []
+                     ]
+                        |> addErrorMessageToInput config.errors.key
+                    )
+                ]
+            , Html.div [ Attr.class "col col-12 col-lg-5" ]
+                [ Html.div [ Attr.class "form-group" ]
+                    ([ Html.input
+                        ([ Attr.class "form-control"
+                         , Attr.value config.values.editing.val
+                         , Attr.placeholder config.placeholder.val
+                         , Events.onInput config.events.onValueChange
+                         , Attr.disabled config.disabled
+                         , Attr.id (config.id ++ "-val")
+                         ]
+                            |> addErrorClassToInput config.errors.val
+                        )
+                        []
+                     ]
+                        |> addErrorMessageToInput config.errors.val
+                    )
+                ]
+            , Html.div [ Attr.class "col col-12 col-lg-2" ]
+                [ Html.button
+                    [ Attr.class "btn btn-icon btn-primary btn-block"
+                    , Events.onClick config.events.onEntryAdd
+                    , Attr.type_ "button"
+                    , Attr.disabled config.disabled
+                    ]
+                    [ Html.text "Add" ]
+                ]
+            ]
+
+        inputs =
+            Dict.foldr addedRow [] config.values.added
+                |> (\xs -> xs ++ editingRow)
+                |> Html.div [ Attr.class "row" ]
+    in
+    Html.div []
+        [ Html.label [ Attr.class "form-label" ] [ Html.text config.label ]
+        , inputs
+        ]
+
+
 type alias FormConfig msg =
     { loading : Bool
     , error : Maybe String
@@ -120,6 +244,9 @@ input obj =
 
         EmailInput config ->
             textInputHtml "email" config
+
+        KeyValueInput config ->
+            keyValueInputHtml config
 
 
 submitButton : String -> Bool -> Html.Html msg

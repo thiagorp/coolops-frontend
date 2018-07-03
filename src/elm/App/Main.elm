@@ -1,6 +1,7 @@
 module App.Main exposing (..)
 
 import App.Fragments.Topbar as Topbar
+import App.Pages.NewEnvironment as NewEnvironment
 import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
 import App.Pages.ProjectsList as ProjectsList
@@ -15,6 +16,7 @@ type Msg
     = UrlChanged Navigation.Location
     | ProjectsListMsg ProjectsList.Msg
     | NewProjectMsg NewProject.Msg
+    | NewEnvironmentMsg NewEnvironment.Msg
     | SettingsMsg Settings.Msg
     | TopbarMsg Topbar.Msg
 
@@ -22,6 +24,7 @@ type Msg
 type Content
     = ProjectsList ProjectsList.Model
     | NewProject NewProject.Model
+    | NewEnvironment NewEnvironment.Model
     | Settings Settings.Model
 
 
@@ -80,8 +83,9 @@ setPage model location =
         Just (Route.EditProject _) ->
             ( { model | page = NotFound }, Cmd.none )
 
-        Just (Route.NewEnvironment _) ->
-            ( { model | page = NotFound }, Cmd.none )
+        Just (Route.NewEnvironment projectId) ->
+            NewEnvironment.init model.apiToken projectId
+                |> wrapPage NewEnvironment NewEnvironmentMsg model
 
         Just (Route.Settings code) ->
             Settings.init model.apiToken code
@@ -113,6 +117,15 @@ update msg model =
                 App _ (NewProject subModel) ->
                     NewProject.update subMsg subModel
                         |> wrapPage NewProject NewProjectMsg model
+
+                _ ->
+                    ( model, Cmd.none )
+
+        NewEnvironmentMsg subMsg ->
+            case model.page of
+                App _ (NewEnvironment subModel) ->
+                    NewEnvironment.update subMsg subModel
+                        |> wrapPage NewEnvironment NewEnvironmentMsg model
 
                 _ ->
                     ( model, Cmd.none )
@@ -154,6 +167,10 @@ contentView content =
         NewProject subModel ->
             NewProject.view subModel
                 |> Html.map NewProjectMsg
+
+        NewEnvironment subModel ->
+            NewEnvironment.view subModel
+                |> Html.map NewEnvironmentMsg
 
         Settings subModel ->
             Settings.view subModel
