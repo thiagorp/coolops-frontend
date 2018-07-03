@@ -110,7 +110,12 @@ environmentRow : Maybe Time -> Environment -> Html msg
 environmentRow maybeCurrentTime environment =
     tr []
         [ td [ width 1, class "pr-0" ] (deploymentStatusCol environment.currentDeployment)
-        , td [] [ text environment.name ]
+        , td []
+            [ div []
+                [ div [] [ text environment.name ]
+                , div [ class "small text-muted" ] [ text ("ID: " ++ environment.id) ]
+                ]
+            ]
         , td [] (deploymentCol maybeCurrentTime environment.currentDeployment)
         ]
 
