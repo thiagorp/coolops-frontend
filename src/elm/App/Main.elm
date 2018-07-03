@@ -1,5 +1,6 @@
 module App.Main exposing (..)
 
+import App.Api.GetProject exposing (Project, getProject)
 import App.Fragments.Topbar as Topbar
 import App.Pages.NewEnvironment as NewEnvironment
 import App.Pages.NewProject as NewProject
@@ -7,6 +8,7 @@ import App.Pages.NotFound as NotFound
 import App.Pages.ProjectsList as ProjectsList
 import App.Pages.Settings as Settings
 import Html
+import Http
 import Navigation
 import Route
 import Util
@@ -19,6 +21,11 @@ type Msg
     | NewEnvironmentMsg NewEnvironment.Msg
     | SettingsMsg Settings.Msg
     | TopbarMsg Topbar.Msg
+    | ProjectLoaded ProjectScopedPage (Result Http.Error Project)
+
+
+type ProjectScopedPage
+    = ScopedNewEnvironment
 
 
 type Content
@@ -26,6 +33,7 @@ type Content
     | NewProject NewProject.Model
     | NewEnvironment NewEnvironment.Model
     | Settings Settings.Model
+    | Loading
 
 
 type Page
@@ -47,6 +55,17 @@ wrapTopbar model content cmds ( subModel, subCmds ) =
     ( { model | page = App subModel content }, Cmd.batch [ cmd, cmds ] )
 
 
+withTopbar : Model -> Content -> Cmd Msg -> ( Model, Cmd Msg )
+withTopbar model content cmd =
+    case model.page of
+        App topbar _ ->
+            ( { model | page = App topbar content }, cmd )
+
+        NotFound ->
+            Topbar.init
+                |> wrapTopbar model content cmd
+
+
 wrapPage : (model -> Content) -> (msg -> Msg) -> Model -> ( model, List (Cmd msg) ) -> ( Model, Cmd Msg )
 wrapPage toContent toMsg model ( subModel, subCmds ) =
     let
@@ -57,13 +76,16 @@ wrapPage toContent toMsg model ( subModel, subCmds ) =
         content =
             toContent subModel
     in
-    case model.page of
-        App topbar _ ->
-            ( { model | page = App topbar content }, cmd )
+    withTopbar model content cmd
 
-        NotFound ->
-            Topbar.init
-                |> wrapTopbar model content cmd
+
+scopedByProject : Model -> String -> ProjectScopedPage -> ( Model, Cmd Msg )
+scopedByProject model projectId page =
+    let
+        cmd =
+            getProject model.apiToken projectId (ProjectLoaded page)
+    in
+    withTopbar model Loading cmd
 
 
 setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
@@ -84,8 +106,7 @@ setPage model location =
             ( { model | page = NotFound }, Cmd.none )
 
         Just (Route.NewEnvironment projectId) ->
-            NewEnvironment.init model.apiToken projectId
-                |> wrapPage NewEnvironment NewEnvironmentMsg model
+            scopedByProject model projectId ScopedNewEnvironment
 
         Just (Route.Settings code) ->
             Settings.init model.apiToken code
@@ -148,6 +169,17 @@ update msg model =
                 NotFound ->
                     ( model, Cmd.none )
 
+        ProjectLoaded page result ->
+            case result of
+                Err _ ->
+                    ( { model | page = NotFound }, Cmd.none )
+
+                Ok project ->
+                    case page of
+                        ScopedNewEnvironment ->
+                            NewEnvironment.init model.apiToken project
+                                |> wrapPage NewEnvironment NewEnvironmentMsg model
+
 
 inLayout : Topbar.Model -> Html.Html Msg -> Html.Html Msg
 inLayout tobarModel page =
@@ -175,6 +207,9 @@ contentView content =
         Settings subModel ->
             Settings.view subModel
                 |> Html.map SettingsMsg
+
+        Loading ->
+            Html.div [] []
 
 
 view : Model -> Html.Html Msg
