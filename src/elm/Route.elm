@@ -1,7 +1,7 @@
 module Route exposing (..)
 
 import Navigation
-import UrlParser as Url exposing ((</>), (<?>), int, s, stringParam, top)
+import UrlParser as Url exposing (..)
 
 
 type ProtectedRoute
@@ -87,6 +87,8 @@ procetedRouteParser =
     Url.oneOf
         [ Url.map ProjectsList top
         , Url.map NewProject (s "projects" </> s "new")
+        , Url.map NewEnvironment (s "projects" </> string </> s "environments" </> s "new")
+        , Url.map EditProject (s "projects" </> string </> s "edit")
         , Url.map Settings (s "settings" <?> stringParam "code")
         ]
 
