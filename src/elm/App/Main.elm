@@ -1,7 +1,9 @@
 module App.Main exposing (..)
 
+import App.Api.GetEnvironment exposing (Environment, getEnvironment)
 import App.Api.GetProject exposing (Project, getProject)
 import App.Fragments.Topbar as Topbar
+import App.Pages.EditEnvironment as EditEnvironment
 import App.Pages.EditProject as EditProject
 import App.Pages.NewEnvironment as NewEnvironment
 import App.Pages.NewProject as NewProject
@@ -21,9 +23,11 @@ type Msg
     | NewProjectMsg NewProject.Msg
     | EditProjectMsg EditProject.Msg
     | NewEnvironmentMsg NewEnvironment.Msg
+    | EditEnvironmentMsg EditEnvironment.Msg
     | SettingsMsg Settings.Msg
     | TopbarMsg Topbar.Msg
     | ProjectLoaded ProjectScopedPage (Result Http.Error Project)
+    | EnvironmentLoaded EnvironmentScopedPage (Result Http.Error Environment)
 
 
 type ProjectScopedPage
@@ -31,10 +35,15 @@ type ProjectScopedPage
     | ScopedEditProject
 
 
+type EnvironmentScopedPage
+    = ScopedEditEnvironment
+
+
 type Content
     = EditProject EditProject.Model
     | NewProject NewProject.Model
     | NewEnvironment NewEnvironment.Model
+    | EditEnvironment EditEnvironment.Model
     | ProjectsList ProjectsList.Model
     | Settings Settings.Model
     | Loading
@@ -92,6 +101,15 @@ scopedByProject model projectId page =
     withTopbar model Loading cmd
 
 
+scopedByEnvironment : Model -> String -> EnvironmentScopedPage -> ( Model, Cmd Msg )
+scopedByEnvironment model environmentId page =
+    let
+        cmd =
+            getEnvironment model.apiToken environmentId (EnvironmentLoaded page)
+    in
+    withTopbar model Loading cmd
+
+
 setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
 setPage model location =
     case Route.readProtectedRoute location of
@@ -111,6 +129,9 @@ setPage model location =
 
         Just (Route.NewEnvironment projectId) ->
             scopedByProject model projectId ScopedNewEnvironment
+
+        Just (Route.EditEnvironment environmentId) ->
+            scopedByEnvironment model environmentId ScopedEditEnvironment
 
         Just (Route.Settings code) ->
             Settings.init model.apiToken code
@@ -136,6 +157,26 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        EditEnvironmentMsg subMsg ->
+            case model.page of
+                App _ (EditEnvironment subModel) ->
+                    EditEnvironment.update subMsg subModel
+                        |> wrapPage EditEnvironment EditEnvironmentMsg model
+
+                _ ->
+                    ( model, Cmd.none )
+
+        EnvironmentLoaded page result ->
+            case result of
+                Err _ ->
+                    ( { model | page = NotFound }, Cmd.none )
+
+                Ok environment ->
+                    case page of
+                        ScopedEditEnvironment ->
+                            EditEnvironment.init model.apiToken environment
+                                |> wrapPage EditEnvironment EditEnvironmentMsg model
 
         ProjectsListMsg subMsg ->
             case model.page of
@@ -209,6 +250,10 @@ inLayout tobarModel page =
 contentView : Content -> Html.Html Msg
 contentView content =
     case content of
+        EditEnvironment subModel ->
+            EditEnvironment.view subModel
+                |> Html.map EditEnvironmentMsg
+
         EditProject subModel ->
             EditProject.view subModel
                 |> Html.map EditProjectMsg

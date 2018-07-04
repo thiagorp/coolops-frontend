@@ -9,6 +9,7 @@ type ProtectedRoute
     | NewProject
     | EditProject String
     | NewEnvironment String
+    | EditEnvironment String
     | Settings (Maybe String)
 
 
@@ -87,8 +88,9 @@ procetedRouteParser =
     Url.oneOf
         [ Url.map ProjectsList top
         , Url.map NewProject (s "projects" </> s "new")
-        , Url.map NewEnvironment (s "projects" </> string </> s "environments" </> s "new")
         , Url.map EditProject (s "projects" </> string </> s "edit")
+        , Url.map NewEnvironment (s "projects" </> string </> s "environments" </> s "new")
+        , Url.map EditEnvironment (s "environments" </> string </> s "edit")
         , Url.map Settings (s "settings" <?> stringParam "code")
         ]
 
@@ -107,6 +109,9 @@ toUrl route =
 
         Protected (NewEnvironment projectId) ->
             "/projects/" ++ projectId ++ "/environments/new"
+
+        Protected (EditEnvironment environmentId) ->
+            "/environments/" ++ environmentId ++ "/edit"
 
         Protected (Settings _) ->
             "/settings"
