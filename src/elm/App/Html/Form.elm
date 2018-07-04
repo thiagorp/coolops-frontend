@@ -46,10 +46,15 @@ type alias KeyValueInputConfig msg =
     }
 
 
+type alias StaticTextInputConfig =
+    { label : String, val : String }
+
+
 type Input msg
     = TextInput (TextInputConfig msg)
     | EmailInput (TextInputConfig msg)
     | PasswordInput (TextInputConfig msg)
+    | StaticTextInput StaticTextInputConfig
     | KeyValueInput (KeyValueInputConfig msg)
 
 
@@ -225,6 +230,14 @@ keyValueInputHtml config =
         ]
 
 
+staticTextInputHtml : StaticTextInputConfig -> Html.Html msg
+staticTextInputHtml { label, val } =
+    Html.div [ Attr.class "form-group" ]
+        [ Html.label [ Attr.class "form-label" ] [ Html.text label ]
+        , Html.div [ Attr.class "form-control-plaintext" ] [ Html.text val ]
+        ]
+
+
 type alias FormConfig msg =
     { loading : Bool
     , error : Maybe String
@@ -244,6 +257,9 @@ input obj =
 
         EmailInput config ->
             textInputHtml "email" config
+
+        StaticTextInput config ->
+            staticTextInputHtml config
 
         KeyValueInput config ->
             keyValueInputHtml config
