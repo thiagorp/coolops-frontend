@@ -140,9 +140,26 @@ view model =
                 |> Html.map PublicMsg
 
 
+pageSubscriptions : Model -> Sub Msg
+pageSubscriptions model =
+    case model.page of
+        Transitioning ->
+            Sub.none
+
+        App subModel ->
+            App.subscriptions subModel
+                |> Sub.map AppMsg
+
+        Public _ ->
+            Sub.none
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    onSessionChange SessionChanged
+    Sub.batch
+        [ onSessionChange SessionChanged
+        , pageSubscriptions model
+        ]
 
 
 main : Program Flags Model Msg

@@ -75,7 +75,7 @@ withTopbar model content cmd =
             ( { model | page = App topbar content }, cmd )
 
         NotFound ->
-            Topbar.init
+            Topbar.init model.apiToken
                 |> wrapTopbar model content cmd
 
 
@@ -284,9 +284,20 @@ view model =
         NotFound ->
             NotFound.view
 
-        App tobar content ->
+        App topbar content ->
             contentView content
-                |> inLayout tobar
+                |> inLayout topbar
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.page of
+        NotFound ->
+            Sub.none
+
+        App topbarModel _ ->
+            Topbar.subscriptions topbarModel
+                |> Sub.map TopbarMsg
 
 
 main : Program String Model Msg
@@ -295,5 +306,5 @@ main =
         { view = view
         , init = init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }

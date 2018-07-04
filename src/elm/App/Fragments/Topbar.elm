@@ -1,28 +1,46 @@
-module App.Fragments.Topbar exposing (Model, Msg, init, update, view)
+module App.Fragments.Topbar exposing (Model, Msg, init, subscriptions, update, view)
 
+import App.Api.GetProfile as Api exposing (Profile)
 import App.Html as AppHtml
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Http exposing (Error)
+import Mouse
 import Ports
+import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type Msg
     = Toggle
+    | CloseDropdown
     | RedirectTo Route.Route
+    | ProfileLoaded (Result Error Profile)
     | LogOut
 
 
 type alias Model =
-    { dropdownOpened : Bool }
+    { dropdownOpened : Bool
+    , profile : WebData Profile
+    }
 
 
-init : PageHandler Model Msg
-init =
-    { dropdownOpened = False }
-        |> return
+init : String -> PageHandler Model Msg
+init apiToken =
+    return { dropdownOpened = False, profile = Loading }
+        |> andPerform (Api.getProfile apiToken ProfileLoaded)
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.dropdownOpened of
+        True ->
+            Mouse.clicks (\_ -> CloseDropdown)
+
+        False ->
+            Sub.none
 
 
 toggleDropdown : Model -> Model
@@ -33,10 +51,17 @@ toggleDropdown model =
 update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
+        ProfileLoaded result ->
+            { model | profile = RemoteData.fromResult result }
+                |> return
+
         Toggle ->
             model
                 |> toggleDropdown
                 |> return
+
+        CloseDropdown ->
+            return { model | dropdownOpened = False }
 
         RedirectTo route ->
             model
@@ -67,27 +92,32 @@ dropdownMenu =
 
 dropdown : Model -> Html Msg
 dropdown model =
-    div [ class "dropdown" ]
-        [ a
-            [ class "nav-link pr-0 leading-none"
-            , attribute "data-toggle" "dropdown"
-            , onClick Toggle
-            ]
-            [ span [ class "avatar" ] [ text "CO" ]
-            , span
-                [ class "ml-2 d-none d-lg-block" ]
-                [ span [ class "text-default" ] [ text "{{USER_NAME}}" ]
-                , small [ class "text-muted d-block mt-1" ] [ text "{{COMPANY_NAME}}" ]
+    case model.profile of
+        Success profile ->
+            div [ class "dropdown" ]
+                [ a
+                    [ class "nav-link pr-0 leading-none"
+                    , attribute "data-toggle" "dropdown"
+                    , onClick Toggle
+                    ]
+                    [ span [ class "avatar" ] [ text (String.left 1 profile.user.first_name ++ String.left 1 profile.user.last_name) ]
+                    , span
+                        [ class "ml-2 d-none d-lg-block" ]
+                        [ span [ class "text-default" ] [ text (profile.user.first_name ++ " " ++ profile.user.last_name) ]
+                        , small [ class "text-muted d-block mt-1" ] [ text profile.company.name ]
+                        ]
+                    ]
+                , div
+                    [ classList
+                        [ ( "dropdown-menu dropdown-menu-right dropdown-menu-arrow", True )
+                        , ( "show", model.dropdownOpened )
+                        ]
+                    ]
+                    dropdownMenu
                 ]
-            ]
-        , div
-            [ classList
-                [ ( "dropdown-menu dropdown-menu-right dropdown-menu-arrow", True )
-                , ( "show", model.dropdownOpened )
-                ]
-            ]
-            dropdownMenu
-        ]
+
+        _ ->
+            div [] []
 
 
 logo : Html msg
