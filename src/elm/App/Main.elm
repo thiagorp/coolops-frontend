@@ -2,6 +2,7 @@ module App.Main exposing (..)
 
 import App.Api.GetProject exposing (Project, getProject)
 import App.Fragments.Topbar as Topbar
+import App.Pages.EditProject as EditProject
 import App.Pages.NewEnvironment as NewEnvironment
 import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
@@ -18,6 +19,7 @@ type Msg
     = UrlChanged Navigation.Location
     | ProjectsListMsg ProjectsList.Msg
     | NewProjectMsg NewProject.Msg
+    | EditProjectMsg EditProject.Msg
     | NewEnvironmentMsg NewEnvironment.Msg
     | SettingsMsg Settings.Msg
     | TopbarMsg Topbar.Msg
@@ -26,12 +28,14 @@ type Msg
 
 type ProjectScopedPage
     = ScopedNewEnvironment
+    | ScopedEditProject
 
 
 type Content
-    = ProjectsList ProjectsList.Model
+    = EditProject EditProject.Model
     | NewProject NewProject.Model
     | NewEnvironment NewEnvironment.Model
+    | ProjectsList ProjectsList.Model
     | Settings Settings.Model
     | Loading
 
@@ -102,8 +106,8 @@ setPage model location =
             NewProject.init model.apiToken
                 |> wrapPage NewProject NewProjectMsg model
 
-        Just (Route.EditProject _) ->
-            ( { model | page = NotFound }, Cmd.none )
+        Just (Route.EditProject projectId) ->
+            scopedByProject model projectId ScopedEditProject
 
         Just (Route.NewEnvironment projectId) ->
             scopedByProject model projectId ScopedNewEnvironment
@@ -123,6 +127,15 @@ update msg model =
     case msg of
         UrlChanged location ->
             setPage model location
+
+        EditProjectMsg subMsg ->
+            case model.page of
+                App _ (EditProject subModel) ->
+                    EditProject.update subMsg subModel
+                        |> wrapPage EditProject EditProjectMsg model
+
+                _ ->
+                    ( model, Cmd.none )
 
         ProjectsListMsg subMsg ->
             case model.page of
@@ -180,6 +193,10 @@ update msg model =
                             NewEnvironment.init model.apiToken project
                                 |> wrapPage NewEnvironment NewEnvironmentMsg model
 
+                        ScopedEditProject ->
+                            EditProject.init model.apiToken project
+                                |> wrapPage EditProject EditProjectMsg model
+
 
 inLayout : Topbar.Model -> Html.Html Msg -> Html.Html Msg
 inLayout tobarModel page =
@@ -192,6 +209,10 @@ inLayout tobarModel page =
 contentView : Content -> Html.Html Msg
 contentView content =
     case content of
+        EditProject subModel ->
+            EditProject.view subModel
+                |> Html.map EditProjectMsg
+
         ProjectsList subModel ->
             ProjectsList.view subModel
                 |> Html.map ProjectsListMsg

@@ -54,3 +54,16 @@ post token path body =
         , timeout = Nothing
         , withCredentials = False
         }
+
+
+patch : Token -> String -> Http.Body -> Http.Request ()
+patch token path body =
+    Http.request
+        { method = "PATCH"
+        , headers = [ authHeader token ]
+        , url = baseUrl ++ path
+        , body = body
+        , expect = Http.expectStringResponse (\_ -> Ok ())
+        , timeout = Nothing
+        , withCredentials = False
+        }
