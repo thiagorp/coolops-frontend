@@ -106,7 +106,7 @@ deploymentStatusCol maybeDeploment =
             [ span [ class "status-icon", class (statusBg deployment) ] [] ]
 
 
-environmentRow : Maybe Time -> Environment -> Html msg
+environmentRow : Maybe Time -> Environment -> Html Msg
 environmentRow maybeCurrentTime environment =
     tr []
         [ td [ width 1, class "pr-0" ] (deploymentStatusCol environment.currentDeployment)
@@ -117,6 +117,8 @@ environmentRow maybeCurrentTime environment =
                 ]
             ]
         , td [] (deploymentCol maybeCurrentTime environment.currentDeployment)
+        , td [ class "text-right" ]
+            [ AppHtml.a (Protected (EditEnvironment environment.id)) LinkClicked [ class "icon" ] [ i [ class "fe fe-edit" ] [] ] ]
         ]
 
 
@@ -124,7 +126,7 @@ projectTableBody : Maybe Time -> Project -> List (Html Msg)
 projectTableBody maybeCurrentTime project =
     case project.environments of
         [] ->
-            [ td [ colspan 3, class "text-center" ] [ i [ class "text-muted" ] [ text "No environment yet" ] ] ]
+            [ td [ colspan 4, class "text-center" ] [ i [ class "text-muted" ] [ text "No environment yet" ] ] ]
 
         _ ->
             List.map (environmentRow maybeCurrentTime) project.environments
@@ -139,6 +141,7 @@ projectTable maybeCurrentTime project =
                     [ th [] []
                     , th [] [ text "Environment name" ]
                     , th [] [ text "Current deployment" ]
+                    , th [] []
                     ]
                 ]
             , tbody [] (projectTableBody maybeCurrentTime project)
