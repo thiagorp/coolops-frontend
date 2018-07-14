@@ -11,12 +11,6 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 
 
-baseUrl : String
-baseUrl =
-    "http://localhost:3001"
-
-
-
 -- Signup
 
 
@@ -52,8 +46,8 @@ decodeSignup =
         (Decode.field "user_access_token" Decode.string)
 
 
-signup : SignupRequest a -> (Result Http.Error SignupResponse -> msg) -> Cmd msg
-signup s msg =
+signup : String -> SignupRequest a -> (Result Http.Error SignupResponse -> msg) -> Cmd msg
+signup baseUrl s msg =
     Http.post (baseUrl ++ "/signup") (Http.stringBody "application/json" <| encodeSignup s) decodeSignup
         |> Http.send msg
 
@@ -88,7 +82,7 @@ decodeLogin =
         (Decode.field "access_token" Decode.string)
 
 
-login : LoginRequest a -> (Result Http.Error LoginResponse -> msg) -> Cmd msg
-login s msg =
+login : String -> LoginRequest a -> (Result Http.Error LoginResponse -> msg) -> Cmd msg
+login baseUrl s msg =
     Http.post (baseUrl ++ "/tokens") (Http.stringBody "application/json" <| encodeLogin s) decodeLogin
         |> Http.send msg

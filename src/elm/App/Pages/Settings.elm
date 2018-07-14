@@ -21,23 +21,24 @@ type Msg
 type alias Model =
     { apiToken : String
     , slackConfig : WebData SlackConfig
+    , baseUrl : String
     }
 
 
-init : String -> Maybe String -> PageHandler Model Msg
-init apiToken maybeCode =
-    return (Model apiToken Loading)
-        |> andPerform (handleSlack apiToken maybeCode)
+init : String -> String -> Maybe String -> PageHandler Model Msg
+init baseUrl apiToken maybeCode =
+    return (Model apiToken Loading baseUrl)
+        |> andPerform (handleSlack baseUrl apiToken maybeCode)
 
 
-handleSlack : String -> Maybe String -> Cmd Msg
-handleSlack apiToken maybeCode =
+handleSlack : String -> String -> Maybe String -> Cmd Msg
+handleSlack baseUrl apiToken maybeCode =
     case maybeCode of
         Nothing ->
-            getSlackConfig apiToken SlackConfigResponse
+            getSlackConfig baseUrl apiToken SlackConfigResponse
 
         Just code ->
-            handleSlackOAuthCallback apiToken SlackOAuthPostResponse { code = code }
+            handleSlackOAuthCallback baseUrl apiToken SlackOAuthPostResponse { code = code }
 
 
 update : Msg -> Model -> PageHandler Model Msg
@@ -49,16 +50,16 @@ update msg model =
 
         SlackOAuthPostResponse _ ->
             return model
-                |> andPerform (getSlackConfig model.apiToken SlackConfigResponse)
+                |> andPerform (getSlackConfig model.baseUrl model.apiToken SlackConfigResponse)
 
         DisconnectSlack ->
             { model | slackConfig = Loading }
                 |> return
-                |> andPerform (disconnectSlack model.apiToken DisconnectSlackResponse)
+                |> andPerform (disconnectSlack model.baseUrl model.apiToken DisconnectSlackResponse)
 
         DisconnectSlackResponse _ ->
             return model
-                |> andPerform (getSlackConfig model.apiToken SlackConfigResponse)
+                |> andPerform (getSlackConfig model.baseUrl model.apiToken SlackConfigResponse)
 
 
 slackUrl : SlackConfig -> String

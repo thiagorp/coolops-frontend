@@ -16,7 +16,7 @@ encode { code } =
         ]
 
 
-handleSlackOAuthCallback : Token -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
-handleSlackOAuthCallback token msg params =
-    post token "/slack_config" (Http.jsonBody <| encode params)
+handleSlackOAuthCallback : String -> Token -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
+handleSlackOAuthCallback baseUrl token msg params =
+    post baseUrl token "/slack_config" (Http.jsonBody <| encode params)
         |> Http.send msg

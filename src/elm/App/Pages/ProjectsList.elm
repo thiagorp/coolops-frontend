@@ -15,14 +15,18 @@ import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type alias Model =
-    { projects : WebData (List Project), apiToken : String, loadedTime : Maybe Time }
+    { projects : WebData (List Project)
+    , apiToken : String
+    , loadedTime : Maybe Time
+    , baseUrl : String
+    }
 
 
-init : String -> PageHandler Model Msg
-init apiToken =
-    return { projects = Loading, apiToken = apiToken, loadedTime = Nothing }
+init : String -> String -> PageHandler Model Msg
+init baseUrl apiToken =
+    return { projects = Loading, apiToken = apiToken, loadedTime = Nothing, baseUrl = baseUrl }
         |> andPerform (Task.perform TimeLoaded Time.now)
-        |> andPerform (listProjects apiToken ProjectsResponse)
+        |> andPerform (listProjects baseUrl apiToken ProjectsResponse)
 
 
 type Msg

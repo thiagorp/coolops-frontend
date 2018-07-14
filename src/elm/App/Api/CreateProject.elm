@@ -17,7 +17,7 @@ encode params =
         ]
 
 
-createProject : Token -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
-createProject token msg params =
-    post token "/projects" (Http.jsonBody <| encode params)
+createProject : String -> Token -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
+createProject baseUrl token msg params =
+    post baseUrl token "/projects" (Http.jsonBody <| encode params)
         |> Http.send msg

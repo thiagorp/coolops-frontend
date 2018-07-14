@@ -17,7 +17,7 @@ encode params =
         ]
 
 
-editProject : Token -> String -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
-editProject token projectId msg params =
-    patch token ("/projects/" ++ projectId) (Http.jsonBody <| encode params)
+editProject : String -> Token -> String -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
+editProject baseUrl token projectId msg params =
+    patch baseUrl token ("/projects/" ++ projectId) (Http.jsonBody <| encode params)
         |> Http.send msg

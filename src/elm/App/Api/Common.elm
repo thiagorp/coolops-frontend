@@ -12,13 +12,8 @@ authHeader token =
     Http.header "Authorization" ("Token " ++ token)
 
 
-baseUrl : String
-baseUrl =
-    "http://localhost:3001"
-
-
-get : Token -> String -> Http.Expect a -> Http.Request a
-get token path expect =
+get : String -> Token -> String -> Http.Expect a -> Http.Request a
+get baseUrl token path expect =
     Http.request
         { method = "GET"
         , headers = [ authHeader token ]
@@ -30,8 +25,8 @@ get token path expect =
         }
 
 
-delete : Token -> String -> Http.Request ()
-delete token path =
+delete : String -> Token -> String -> Http.Request ()
+delete baseUrl token path =
     Http.request
         { method = "DELETE"
         , headers = [ authHeader token ]
@@ -43,8 +38,8 @@ delete token path =
         }
 
 
-post : Token -> String -> Http.Body -> Http.Request ()
-post token path body =
+post : String -> Token -> String -> Http.Body -> Http.Request ()
+post baseUrl token path body =
     Http.request
         { method = "POST"
         , headers = [ authHeader token ]
@@ -56,8 +51,8 @@ post token path body =
         }
 
 
-patch : Token -> String -> Http.Body -> Http.Request ()
-patch token path body =
+patch : String -> Token -> String -> Http.Body -> Http.Request ()
+patch baseUrl token path body =
     Http.request
         { method = "PATCH"
         , headers = [ authHeader token ]

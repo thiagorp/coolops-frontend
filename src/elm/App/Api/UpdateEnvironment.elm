@@ -25,7 +25,7 @@ encode params =
         ]
 
 
-updateEnvironment : Token -> String -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
-updateEnvironment token environmentId msg params =
-    patch token ("/environments/" ++ environmentId) (Http.jsonBody <| encode params)
+updateEnvironment : String -> Token -> String -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
+updateEnvironment baseUrl token environmentId msg params =
+    patch baseUrl token ("/environments/" ++ environmentId) (Http.jsonBody <| encode params)
         |> Http.send msg

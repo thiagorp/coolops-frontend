@@ -55,7 +55,10 @@ type Page
 
 
 type alias Model =
-    { page : Page, apiToken : String }
+    { page : Page
+    , apiToken : String
+    , baseUrl : String
+    }
 
 
 wrapTopbar : Model -> Content -> Cmd Msg -> ( Topbar.Model, List (Cmd Topbar.Msg) ) -> ( Model, Cmd Msg )
@@ -75,7 +78,7 @@ withTopbar model content cmd =
             ( { model | page = App topbar content }, cmd )
 
         NotFound ->
-            Topbar.init model.apiToken
+            Topbar.init model.baseUrl model.apiToken
                 |> wrapTopbar model content cmd
 
 
@@ -96,7 +99,7 @@ scopedByProject : Model -> String -> ProjectScopedPage -> ( Model, Cmd Msg )
 scopedByProject model projectId page =
     let
         cmd =
-            getProject model.apiToken projectId (ProjectLoaded page)
+            getProject model.baseUrl model.apiToken projectId (ProjectLoaded page)
     in
     withTopbar model Loading cmd
 
@@ -105,7 +108,7 @@ scopedByEnvironment : Model -> String -> EnvironmentScopedPage -> ( Model, Cmd M
 scopedByEnvironment model environmentId page =
     let
         cmd =
-            getEnvironment model.apiToken environmentId (EnvironmentLoaded page)
+            getEnvironment model.baseUrl model.apiToken environmentId (EnvironmentLoaded page)
     in
     withTopbar model Loading cmd
 
@@ -117,11 +120,11 @@ setPage model location =
             ( { model | page = NotFound }, Cmd.none )
 
         Just Route.ProjectsList ->
-            ProjectsList.init model.apiToken
+            ProjectsList.init model.baseUrl model.apiToken
                 |> wrapPage ProjectsList ProjectsListMsg model
 
         Just Route.NewProject ->
-            NewProject.init model.apiToken
+            NewProject.init model.baseUrl model.apiToken
                 |> wrapPage NewProject NewProjectMsg model
 
         Just (Route.EditProject projectId) ->
@@ -134,13 +137,13 @@ setPage model location =
             scopedByEnvironment model environmentId ScopedEditEnvironment
 
         Just (Route.Settings code) ->
-            Settings.init model.apiToken code
+            Settings.init model.baseUrl model.apiToken code
                 |> wrapPage Settings SettingsMsg model
 
 
-init : String -> Navigation.Location -> ( Model, Cmd Msg )
-init apiToken =
-    setPage (Model NotFound apiToken)
+init : String -> String -> Navigation.Location -> ( Model, Cmd Msg )
+init baseUrl apiToken =
+    setPage (Model NotFound apiToken baseUrl)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -175,7 +178,7 @@ update msg model =
                 Ok environment ->
                     case page of
                         ScopedEditEnvironment ->
-                            EditEnvironment.init model.apiToken environment
+                            EditEnvironment.init model.baseUrl model.apiToken environment
                                 |> wrapPage EditEnvironment EditEnvironmentMsg model
 
         ProjectsListMsg subMsg ->
@@ -231,11 +234,11 @@ update msg model =
                 Ok project ->
                     case page of
                         ScopedNewEnvironment ->
-                            NewEnvironment.init model.apiToken project
+                            NewEnvironment.init model.baseUrl model.apiToken project
                                 |> wrapPage NewEnvironment NewEnvironmentMsg model
 
                         ScopedEditProject ->
-                            EditProject.init model.apiToken project
+                            EditProject.init model.baseUrl model.apiToken project
                                 |> wrapPage EditProject EditProjectMsg model
 
 
@@ -298,13 +301,3 @@ subscriptions model =
         App topbarModel _ ->
             Topbar.subscriptions topbarModel
                 |> Sub.map TopbarMsg
-
-
-main : Program String Model Msg
-main =
-    Navigation.programWithFlags UrlChanged
-        { view = view
-        , init = init
-        , update = update
-        , subscriptions = subscriptions
-        }

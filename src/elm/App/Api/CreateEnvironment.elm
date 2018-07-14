@@ -25,7 +25,7 @@ encode params =
         ]
 
 
-createEnvironment : Token -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
-createEnvironment token msg params =
-    post token ("/projects/" ++ params.projectId ++ "/environments") (Http.jsonBody <| encode params)
+createEnvironment : String -> Token -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
+createEnvironment baseUrl token msg params =
+    post baseUrl token ("/projects/" ++ params.projectId ++ "/environments") (Http.jsonBody <| encode params)
         |> Http.send msg
