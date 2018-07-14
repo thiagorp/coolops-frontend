@@ -113,7 +113,7 @@ decoder =
         (Decode.field "environments" (Decode.list environmentDecoder))
 
 
-listProjects : Token -> (Result Http.Error (List Project) -> msg) -> Cmd msg
-listProjects token msg =
-    get token "/projects" (Http.expectJson (Decode.list decoder))
+listProjects : String -> Token -> (Result Http.Error (List Project) -> msg) -> Cmd msg
+listProjects baseUrl token msg =
+    get baseUrl token "/projects" (Http.expectJson (Decode.list decoder))
         |> Http.send msg

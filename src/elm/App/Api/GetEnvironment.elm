@@ -21,7 +21,7 @@ decoder =
         (Decode.field "env_vars" (Decode.dict Decode.string))
 
 
-getEnvironment : Token -> String -> (Result Http.Error Environment -> msg) -> Cmd msg
-getEnvironment token id msg =
-    get token ("/environments/" ++ id) (Http.expectJson decoder)
+getEnvironment : String -> Token -> String -> (Result Http.Error Environment -> msg) -> Cmd msg
+getEnvironment baseUrl token id msg =
+    get baseUrl token ("/environments/" ++ id) (Http.expectJson decoder)
         |> Http.send msg

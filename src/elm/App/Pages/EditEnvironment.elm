@@ -21,6 +21,7 @@ type alias Model =
     , editingKeyError : Maybe (List String)
     , apiToken : String
     , formState : Validation.FormState Field
+    , baseUrl : String
     }
 
 
@@ -39,9 +40,19 @@ type Field
     = NameField
 
 
-init : String -> Environment -> PageHandler Model Msg
-init apiToken { id, name, environmentVars } =
-    return (Model id name environmentVars "" "" Nothing apiToken Validation.initialState)
+init : String -> String -> Environment -> PageHandler Model Msg
+init baseUrl apiToken { id, name, environmentVars } =
+    return
+        { id = id
+        , name = name
+        , environmentVars = environmentVars
+        , editingKey = ""
+        , editingValue = ""
+        , editingKeyError = Nothing
+        , apiToken = apiToken
+        , formState = Validation.initialState
+        , baseUrl = baseUrl
+        }
 
 
 formConfig : Validation.FormConfig Model Field (PageHandler Model Msg)
@@ -61,7 +72,7 @@ formConfig =
 submit : Model -> PageHandler Model Msg
 submit model =
     return model
-        |> andPerform (Api.updateEnvironment model.apiToken model.id SubmitResponse model)
+        |> andPerform (Api.updateEnvironment model.baseUrl model.apiToken model.id SubmitResponse model)
 
 
 update : Msg -> Model -> PageHandler Model Msg

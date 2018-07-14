@@ -22,7 +22,7 @@ decoder =
         (Decode.field "access_token" Decode.string)
 
 
-getProject : Token -> String -> (Result Http.Error Project -> msg) -> Cmd msg
-getProject token id msg =
-    get token ("/projects/" ++ id) (Http.expectJson decoder)
+getProject : String -> Token -> String -> (Result Http.Error Project -> msg) -> Cmd msg
+getProject baseUrl token id msg =
+    get baseUrl token ("/projects/" ++ id) (Http.expectJson decoder)
         |> Http.send msg

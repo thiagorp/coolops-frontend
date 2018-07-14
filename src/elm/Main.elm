@@ -22,11 +22,16 @@ type Page
 
 
 type alias Flags =
-    { token : Maybe String }
+    { token : Maybe String
+    , baseUrl : String
+    }
 
 
 type alias Model =
-    { page : Page, token : Maybe String }
+    { page : Page
+    , token : Maybe String
+    , baseUrl : String
+    }
 
 
 wrapPage : (model -> Page) -> (msg -> Msg) -> Model -> ( model, Cmd msg ) -> ( Model, Cmd Msg )
@@ -62,12 +67,12 @@ setPage model location =
     in
     case ( model.page, model.token ) of
         ( Transitioning, Just token ) ->
-            App.init token location
+            App.init model.baseUrl token location
                 |> wrapPage App AppMsg model
                 |> handleProtectedRoute
 
         ( Transitioning, Nothing ) ->
-            Public.init location
+            Public.init model.baseUrl location
                 |> wrapPage Public PublicMsg model
                 |> handleOpenRoute
 
@@ -91,8 +96,8 @@ setPage model location =
 
 
 init : Flags -> Navigation.Location -> ( Model, Cmd Msg )
-init { token } =
-    setPage (Model Transitioning token)
+init { token, baseUrl } =
+    setPage (Model Transitioning token baseUrl)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

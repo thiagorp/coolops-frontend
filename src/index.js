@@ -6,7 +6,8 @@ import registerServiceWorker from './registerServiceWorker';
 
 var node = document.getElementById('root');
 var app = Main.embed(node, {
-  token : localStorage.getItem('accessToken')
+  token : localStorage.getItem('accessToken'),
+  baseUrl : process.env.ELM_APP_API_BASE_URL || 'http://localhost:3001',
 });
 
 app.ports.login.subscribe(function(token) {

@@ -16,7 +16,7 @@ decoder =
         (Decode.field "client_id" Decode.string)
 
 
-getSlackConfig : Token -> (Result Http.Error SlackConfig -> msg) -> Cmd msg
-getSlackConfig token msg =
-    get token "/slack_config" (Http.expectJson decoder)
+getSlackConfig : String -> Token -> (Result Http.Error SlackConfig -> msg) -> Cmd msg
+getSlackConfig baseUrl token msg =
+    get baseUrl token "/slack_config" (Http.expectJson decoder)
         |> Http.send msg

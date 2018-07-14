@@ -15,12 +15,19 @@ type alias Model =
     , deploymentImage : String
     , apiToken : String
     , formState : Validation.FormState Field
+    , baseUrl : String
     }
 
 
-init : String -> PageHandler Model Msg
-init apiToken =
-    return (Model "" "" apiToken Validation.initialState)
+init : String -> String -> PageHandler Model Msg
+init baseUrl apiToken =
+    return
+        { name = ""
+        , deploymentImage = ""
+        , apiToken = apiToken
+        , formState = Validation.initialState
+        , baseUrl = baseUrl
+        }
 
 
 type Field
@@ -62,7 +69,7 @@ formConfig =
 submit : Model -> PageHandler Model Msg
 submit model =
     return model
-        |> andPerform (Api.createProject model.apiToken SubmitResponse model)
+        |> andPerform (Api.createProject model.baseUrl model.apiToken SubmitResponse model)
 
 
 update : Msg -> Model -> PageHandler Model Msg

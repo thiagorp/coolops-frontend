@@ -22,6 +22,7 @@ type alias Model =
     , projectName : String
     , apiToken : String
     , formState : Validation.FormState Field
+    , baseUrl : String
     }
 
 
@@ -40,9 +41,9 @@ type Field
     = NameField
 
 
-init : String -> Project -> PageHandler Model Msg
-init apiToken { id, name } =
-    return (Model "" Dict.empty "" "" Nothing id name apiToken Validation.initialState)
+init : String -> String -> Project -> PageHandler Model Msg
+init baseUrl apiToken { id, name } =
+    return (Model "" Dict.empty "" "" Nothing id name apiToken Validation.initialState baseUrl)
 
 
 formConfig : Validation.FormConfig Model Field (PageHandler Model Msg)
@@ -62,7 +63,7 @@ formConfig =
 submit : Model -> PageHandler Model Msg
 submit model =
     return model
-        |> andPerform (Api.createEnvironment model.apiToken SubmitResponse model)
+        |> andPerform (Api.createEnvironment model.baseUrl model.apiToken SubmitResponse model)
 
 
 update : Msg -> Model -> PageHandler Model Msg

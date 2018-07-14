@@ -23,12 +23,21 @@ type alias Model =
     , password : String
     , companyName : String
     , formState : Validation.FormState Field
+    , baseUrl : String
     }
 
 
-init : PageHandler Model Msg
-init =
-    return (Model "" "" "" "" "" Validation.initialState)
+init : String -> PageHandler Model Msg
+init baseUrl =
+    return
+        { firstName = ""
+        , lastName = ""
+        , email = ""
+        , password = ""
+        , companyName = ""
+        , formState = Validation.initialState
+        , baseUrl = baseUrl
+        }
 
 
 
@@ -92,7 +101,7 @@ formConfig =
 signup : Model -> PageHandler Model Msg
 signup model =
     return model
-        |> andPerform (Api.signup model SignupCallback)
+        |> andPerform (Api.signup model.baseUrl model SignupCallback)
 
 
 update : Msg -> Model -> PageHandler Model Msg

@@ -21,7 +21,7 @@ type Page
 
 
 type alias Model =
-    { page : Page }
+    { page : Page, baseUrl : String }
 
 
 wrapPage : (model -> Page) -> (msg -> Msg) -> Model -> ( model, List (Cmd msg) ) -> ( Model, Cmd Msg )
@@ -48,18 +48,18 @@ setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
 setPage model location =
     case Route.readOpenRoute location of
         Just Route.Signup ->
-            wrapPage Signup SignupMsg model Signup.init
+            wrapPage Signup SignupMsg model (Signup.init model.baseUrl)
 
         Just Route.Login ->
-            wrapPage Login LoginMsg model Login.init
+            wrapPage Login LoginMsg model (Login.init model.baseUrl)
 
         _ ->
-            ( { page = NotFound }, Cmd.none )
+            ( { model | page = NotFound }, Cmd.none )
 
 
-init : Navigation.Location -> ( Model, Cmd Msg )
-init =
-    setPage (Model NotFound)
+init : String -> Navigation.Location -> ( Model, Cmd Msg )
+init baseUrl =
+    setPage (Model NotFound baseUrl)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -93,13 +93,3 @@ view model =
 
         NotFound ->
             NotFound.view
-
-
-main : Program Never Model Msg
-main =
-    Navigation.program UrlChanged
-        { view = view
-        , init = init
-        , update = update
-        , subscriptions = always Sub.none
-        }

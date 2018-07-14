@@ -42,7 +42,7 @@ decoder =
         (Decode.field "company" decodeCompany)
 
 
-getProfile : Token -> (Result Http.Error Profile -> msg) -> Cmd msg
-getProfile token msg =
-    get token "/me" (Http.expectJson decoder)
+getProfile : String -> Token -> (Result Http.Error Profile -> msg) -> Cmd msg
+getProfile baseUrl token msg =
+    get baseUrl token "/me" (Http.expectJson decoder)
         |> Http.send msg
