@@ -1,3 +1,4 @@
 FROM node:9.11-alpine
 
+RUN apk add --update make
 RUN yarn global add create-elm-app
