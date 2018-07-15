@@ -1,6 +1,6 @@
 FROM frolvlad/alpine-glibc
 
-RUN apk add --update make docker
+RUN apk add --update make docker curl
 RUN apk add --no-cache gmp yarn
 RUN yarn global add elm
 RUN yarn global add create-elm-app
