@@ -9,6 +9,7 @@ import Dict exposing (Dict)
 import Html as Html
 import Html.Attributes as Attr
 import Html.Events as Events
+import SelectList exposing (..)
 
 
 type InputAttribute msg
@@ -22,6 +23,17 @@ type alias TextInputConfig msg =
     , errors : Maybe (List String)
     , disabled : Bool
     , attributes : List (InputAttribute msg)
+    , id : String
+    }
+
+
+type alias DropdownInputConfig msg =
+    { label : String
+    , options : SelectList { key : String, val : String }
+    , errors : Maybe (List String)
+    , disabled : Bool
+    , events :
+        { onSelect : String -> msg }
     , id : String
     }
 
@@ -54,6 +66,7 @@ type Input msg
     = TextInput (TextInputConfig msg)
     | EmailInput (TextInputConfig msg)
     | PasswordInput (TextInputConfig msg)
+    | DropdownInput (DropdownInputConfig msg)
     | StaticTextInput StaticTextInputConfig
     | KeyValueInput (KeyValueInputConfig msg)
 
@@ -124,6 +137,39 @@ textInputHtml inputType { label, placeholder, errors, disabled, attributes, id }
             , Html.input inputAttributes []
             ]
                 |> addErrorMessageToInput errors
+    in
+    Html.div [ Attr.class "form-group" ] elements
+
+
+dropdownInputHtml : DropdownInputConfig msg -> Html.Html msg
+dropdownInputHtml config =
+    let
+        options =
+            config.options
+                |> SelectList.mapBy
+                    (\position option ->
+                        Html.option
+                            [ Attr.selected (position == SelectList.Selected), Attr.value option.key ]
+                            [ Html.text option.val ]
+                    )
+                |> SelectList.toList
+
+        dropdownAttributes =
+            [ Attr.class "form-control"
+            , Attr.disabled config.disabled
+            , Attr.id config.id
+            , Events.onInput config.events.onSelect
+            ]
+                |> addErrorClassToInput config.errors
+
+        dropdown =
+            Html.select dropdownAttributes options
+
+        elements =
+            [ Html.label [ Attr.class "form-label", Attr.for config.id ] [ Html.text config.label ]
+            , dropdown
+            ]
+                |> addErrorMessageToInput config.errors
     in
     Html.div [ Attr.class "form-group" ] elements
 
@@ -257,6 +303,9 @@ input obj =
 
         EmailInput config ->
             textInputHtml "email" config
+
+        DropdownInput config ->
+            dropdownInputHtml config
 
         StaticTextInput config ->
             staticTextInputHtml config

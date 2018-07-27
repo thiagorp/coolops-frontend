@@ -3,6 +3,7 @@ module App.Main exposing (..)
 import App.Api.GetEnvironment exposing (Environment, getEnvironment)
 import App.Api.GetProject exposing (Project, getProject)
 import App.Fragments.Topbar as Topbar
+import App.Pages.CopyEnvironment as CopyEnvironment
 import App.Pages.EditEnvironment as EditEnvironment
 import App.Pages.EditProject as EditProject
 import App.Pages.NewEnvironment as NewEnvironment
@@ -24,6 +25,7 @@ type Msg
     | EditProjectMsg EditProject.Msg
     | NewEnvironmentMsg NewEnvironment.Msg
     | EditEnvironmentMsg EditEnvironment.Msg
+    | CopyEnvironmentMsg CopyEnvironment.Msg
     | SettingsMsg Settings.Msg
     | TopbarMsg Topbar.Msg
     | ProjectLoaded ProjectScopedPage (Result Http.Error Project)
@@ -37,6 +39,7 @@ type ProjectScopedPage
 
 type EnvironmentScopedPage
     = ScopedEditEnvironment
+    | ScopedCopyEnvironment
 
 
 type Content
@@ -44,6 +47,7 @@ type Content
     | NewProject NewProject.Model
     | NewEnvironment NewEnvironment.Model
     | EditEnvironment EditEnvironment.Model
+    | CopyEnvironment CopyEnvironment.Model
     | ProjectsList ProjectsList.Model
     | Settings Settings.Model
     | Loading
@@ -136,6 +140,9 @@ setPage model location =
         Just (Route.EditEnvironment environmentId) ->
             scopedByEnvironment model environmentId ScopedEditEnvironment
 
+        Just (Route.CopyEnvironment environmentId) ->
+            scopedByEnvironment model environmentId ScopedCopyEnvironment
+
         Just (Route.Settings code) ->
             Settings.init model.baseUrl model.apiToken code
                 |> wrapPage Settings SettingsMsg model
@@ -170,6 +177,15 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        CopyEnvironmentMsg subMsg ->
+            case model.page of
+                App _ (CopyEnvironment subModel) ->
+                    CopyEnvironment.update subMsg subModel
+                        |> wrapPage CopyEnvironment CopyEnvironmentMsg model
+
+                _ ->
+                    ( model, Cmd.none )
+
         EnvironmentLoaded page result ->
             case result of
                 Err _ ->
@@ -180,6 +196,10 @@ update msg model =
                         ScopedEditEnvironment ->
                             EditEnvironment.init model.baseUrl model.apiToken environment
                                 |> wrapPage EditEnvironment EditEnvironmentMsg model
+
+                        ScopedCopyEnvironment ->
+                            CopyEnvironment.init model.baseUrl model.apiToken environment
+                                |> wrapPage CopyEnvironment CopyEnvironmentMsg model
 
         ProjectsListMsg subMsg ->
             case model.page of
@@ -253,6 +273,10 @@ inLayout tobarModel page =
 contentView : Content -> Html.Html Msg
 contentView content =
     case content of
+        CopyEnvironment subModel ->
+            CopyEnvironment.view subModel
+                |> Html.map CopyEnvironmentMsg
+
         EditEnvironment subModel ->
             EditEnvironment.view subModel
                 |> Html.map EditEnvironmentMsg
