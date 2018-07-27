@@ -1,20 +1,23 @@
-module App.Pages.EditEnvironment exposing (..)
+module App.Pages.CopyEnvironment exposing (..)
 
+import App.Api.CreateEnvironment as Api
 import App.Api.GetEnvironment exposing (Environment)
-import App.Api.UpdateEnvironment as Api
+import App.Api.ListProjects as Api exposing (Project)
 import App.Html.Form as Form
 import Dict exposing (Dict)
 import Form.Validation as Validation
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
+import RemoteData exposing (RemoteData(..), WebData)
 import Route
+import SelectList
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type alias Model =
-    { id : String
-    , name : String
+    { name : String
+    , projectId : String
     , environmentVars : Dict String String
     , editingKey : String
     , editingValue : String
@@ -22,29 +25,33 @@ type alias Model =
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
+    , projects : WebData (List Project)
     }
 
 
 type Msg
     = NameUpdated String
+    | ProjectUpdated String
     | EnvVarValueUpdated String
     | EnvVarKeyUpdated String
     | EnvVarAdded
     | EnvVarRemoved String
     | EnvVarEditClicked String
+    | ProjectsResponse (Result Http.Error (List Project))
     | Submit
     | SubmitResponse (Result Http.Error ())
 
 
 type Field
     = NameField
+    | ProjectField
 
 
 init : String -> String -> Environment -> PageHandler Model Msg
-init baseUrl apiToken { id, name, environmentVars } =
+init baseUrl apiToken { environmentVars, projectId } =
     return
-        { id = id
-        , name = name
+        { name = ""
+        , projectId = projectId
         , environmentVars = environmentVars
         , editingKey = ""
         , editingValue = ""
@@ -52,7 +59,9 @@ init baseUrl apiToken { id, name, environmentVars } =
         , apiToken = apiToken
         , formState = Validation.initialState
         , baseUrl = baseUrl
+        , projects = Loading
         }
+        |> andPerform (Api.listProjects baseUrl apiToken ProjectsResponse)
 
 
 formConfig : Validation.FormConfig Model Field (PageHandler Model Msg)
@@ -61,6 +70,7 @@ formConfig =
         validator =
             Validation.all
                 [ Validation.ifBlank .name NameField
+                , Validation.ifBlank .projectId ProjectField
                 ]
     in
     { validator = validator
@@ -72,7 +82,7 @@ formConfig =
 submit : Model -> PageHandler Model Msg
 submit model =
     return model
-        |> andPerform (Api.updateEnvironment model.baseUrl model.apiToken model.id SubmitResponse model)
+        |> andPerform (Api.createEnvironment model.baseUrl model.apiToken SubmitResponse model)
 
 
 update : Msg -> Model -> PageHandler Model Msg
@@ -80,6 +90,11 @@ update msg model =
     case msg of
         NameUpdated newName ->
             { model | name = newName }
+                |> Validation.validate formConfig
+                |> return
+
+        ProjectUpdated newProject ->
+            { model | projectId = newProject }
                 |> Validation.validate formConfig
                 |> return
 
@@ -123,6 +138,10 @@ update msg model =
             { model | environmentVars = Dict.remove key model.environmentVars }
                 |> return
 
+        ProjectsResponse result ->
+            { model | projects = RemoteData.fromResult result }
+                |> return
+
         Submit ->
             Validation.submit formConfig model
 
@@ -141,8 +160,28 @@ form model =
         submitting =
             Validation.isSubmitting model.formState
 
+        projectsList =
+            case model.projects of
+                Success projects ->
+                    projects
+                        |> List.map (\{ id, name } -> { key = id, val = name })
+                        |> SelectList.fromLists [] { key = "", val = "Select a project" }
+                        |> SelectList.select (\{ key } -> key == model.projectId)
+
+                _ ->
+                    SelectList.singleton { key = "", val = "Select a project" }
+
         inputs =
-            [ Form.TextInput
+            [ Form.DropdownInput
+                { label = "Project"
+                , options = projectsList
+                , errors = Validation.errorsOf model.formState ProjectField
+                , disabled = submitting || RemoteData.isLoading model.projects
+                , id = "new-environment-form-project-input"
+                , events =
+                    { onSelect = ProjectUpdated }
+                }
+            , Form.TextInput
                 { label = "Name"
                 , placeholder = "Enter your environment's name"
                 , errors = Validation.errorsOf model.formState NameField
@@ -173,7 +212,7 @@ form model =
         formConfig =
             { loading = submitting
             , error = Validation.getServerError model.formState
-            , submitButtonText = "Save"
+            , submitButtonText = "Create"
             , msg = Submit
             }
     in
@@ -184,6 +223,6 @@ view : Model -> Html Msg
 view model =
     div [ class "container" ]
         [ div [ class "page-header" ]
-            [ h1 [ class "page-title" ] [ text ("Edit " ++ model.name) ] ]
+            [ h1 [ class "page-title" ] [ text "Create environment" ] ]
         , form model
         ]

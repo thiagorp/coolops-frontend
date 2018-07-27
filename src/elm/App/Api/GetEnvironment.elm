@@ -9,15 +9,17 @@ import Json.Decode as Decode
 type alias Environment =
     { id : String
     , name : String
+    , projectId : String
     , environmentVars : Dict String String
     }
 
 
 decoder : Decode.Decoder Environment
 decoder =
-    Decode.map3 Environment
+    Decode.map4 Environment
         (Decode.field "id" Decode.string)
         (Decode.field "name" Decode.string)
+        (Decode.field "project_id" Decode.string)
         (Decode.field "env_vars" (Decode.dict Decode.string))
 
 

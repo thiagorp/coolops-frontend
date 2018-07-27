@@ -122,7 +122,17 @@ environmentRow maybeCurrentTime environment =
             ]
         , td [] (deploymentCol maybeCurrentTime environment.currentDeployment)
         , td [ class "text-right" ]
-            [ AppHtml.a (Protected (EditEnvironment environment.id)) LinkClicked [ class "icon" ] [ i [ class "fe fe-edit" ] [] ] ]
+            [ AppHtml.a
+                (Protected (CopyEnvironment environment.id))
+                LinkClicked
+                [ class "icon mr-2" ]
+                [ i [ class "fe fe-copy" ] [] ]
+            , AppHtml.a
+                (Protected (EditEnvironment environment.id))
+                LinkClicked
+                [ class "icon" ]
+                [ i [ class "fe fe-edit" ] [] ]
+            ]
         ]
 
 
