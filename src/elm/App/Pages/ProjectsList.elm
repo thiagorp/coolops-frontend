@@ -171,7 +171,8 @@ projectView maybeCurrentTime project =
                 [ div [ class "card-header" ]
                     [ h3 [ class "card-title" ] [ text project.name ]
                     , div [ class "card-options" ]
-                        [ AppHtml.a (Protected (EditProject project.id))
+                        [ AppHtml.a
+                            (Protected (EditProject project.id))
                             LinkClicked
                             [ class "btn btn-sm btn-secondary" ]
                             [ i [ class "fas fa-cog mr-2" ] [], text "Settings" ]

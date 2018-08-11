@@ -8,6 +8,7 @@ type ProtectedRoute
     = ProjectsList
     | NewProject
     | EditProject String
+    | SyncingProject (Maybe String) (Maybe String)
     | NewEnvironment String
     | CopyEnvironment String
     | EditEnvironment String
@@ -93,6 +94,7 @@ procetedRouteParser =
         , Url.map NewEnvironment (s "projects" </> string </> s "environments" </> s "new")
         , Url.map EditEnvironment (s "environments" </> string </> s "edit")
         , Url.map CopyEnvironment (s "environments" </> string </> s "copy")
+        , Url.map SyncingProject (s "projects" </> s "syncing" <?> stringParam "code" <?> stringParam "state")
         , Url.map Settings (s "settings" <?> stringParam "code")
         ]
 
@@ -102,6 +104,9 @@ toUrl route =
     case route of
         Protected ProjectsList ->
             "/"
+
+        Protected (SyncingProject code state) ->
+            "/projects/syncing?code=" ++ Maybe.withDefault "" code ++ "&state=" ++ Maybe.withDefault "" state
 
         Protected NewProject ->
             "/projects/new"

@@ -2,11 +2,15 @@ module App.Pages.EditProject exposing (..)
 
 import App.Api.EditProject as Api
 import App.Api.GetProject exposing (Project)
-import App.Html exposing (..)
+import App.Api.GetSlackProjectIntegration exposing (..)
+import App.Html as AppHtml
 import App.Html.Form as Form
 import Form.Validation as Validation
-import Html exposing (Html)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Http
+import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import Util exposing (PageHandler, andPerform, noop, return)
 
@@ -19,6 +23,7 @@ type alias Model =
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
+    , slackConfig : WebData SlackProjectIntegration
     }
 
 
@@ -32,7 +37,10 @@ init baseUrl apiToken { id, deploymentImage, name, accessToken } =
         , apiToken = apiToken
         , formState = Validation.initialState
         , baseUrl = baseUrl
+        , slackConfig = Loading
         }
+        |> andPerform
+            (getSlackProjectIntegration baseUrl apiToken id SlackConfigResponse)
 
 
 type Field
@@ -42,6 +50,7 @@ type Field
 
 type Msg
     = FieldUpdated Field String
+    | SlackConfigResponse (Result Http.Error SlackProjectIntegration)
     | Submit
     | SubmitResponse (Result Http.Error ())
 
@@ -85,6 +94,10 @@ update msg model =
                 |> Validation.validate formConfig
                 |> return
 
+        SlackConfigResponse result ->
+            { model | slackConfig = RemoteData.fromResult result }
+                |> return
+
         Submit ->
             Validation.submit formConfig model
 
@@ -97,29 +110,34 @@ update msg model =
                 |> andPerform (Route.redirectTo (Route.Protected Route.ProjectsList))
 
 
-form : Model -> Html Msg
-form { name, deploymentImage, accessToken, formState } =
+redirectUri : SlackProjectIntegration -> String -> String
+redirectUri { clientId } projectId =
+    "https://slack.com/oauth/authorize?client_id=" ++ clientId ++ "&scope=chat:write,commands&single_channel=true&state=" ++ projectId
+
+
+formBody : Model -> Bool -> List (Html Msg)
+formBody model submitting =
     let
         onInput =
             Form.OnInput << FieldUpdated
 
         errorsOf =
-            Validation.errorsOf formState
+            Validation.errorsOf model.formState
 
         submitting =
-            Validation.isSubmitting formState
+            Validation.isSubmitting model.formState
 
         inputs =
             [ Form.StaticTextInput
                 { label = "Access token"
-                , val = accessToken
+                , val = model.accessToken
                 }
             , Form.TextInput
                 { label = "Name"
                 , placeholder = "Enter your project's name"
                 , errors = errorsOf NameField
                 , disabled = submitting
-                , attributes = [ onInput NameField, Form.InputValue name ]
+                , attributes = [ onInput NameField, Form.InputValue model.name ]
                 , id = "new-project-form-name-input"
                 }
             , Form.TextInput
@@ -127,24 +145,57 @@ form { name, deploymentImage, accessToken, formState } =
                 , placeholder = "Enter the docker image of your deployment"
                 , errors = errorsOf DeploymentImageField
                 , disabled = submitting
-                , attributes = [ onInput DeploymentImageField, Form.InputValue deploymentImage ]
+                , attributes = [ onInput DeploymentImageField, Form.InputValue model.deploymentImage ]
                 , id = "new-project-form-deployment-image-input"
                 }
             ]
-
-        formConfig =
-            { loading = submitting
-            , error = Validation.getServerError formState
-            , submitButtonText = "Create"
-            , msg = Submit
-            }
     in
-    Form.linearCardForm formConfig inputs
+    List.map Form.input inputs
+        ++ slackProjectIntegrationInput model
+
+
+slackProjectIntegrationInput : Model -> List (Html Msg)
+slackProjectIntegrationInput { slackConfig, id } =
+    case slackConfig of
+        NotAsked ->
+            []
+
+        Loading ->
+            []
+
+        Failure _ ->
+            []
+
+        Success config ->
+            [ div [ class "form-group" ]
+                [ label [ class "form-label" ] [ text "Slack synchronization" ]
+                , AppHtml.externalLink
+                    (redirectUri config id)
+                    []
+                    [ text "Sync" ]
+                ]
+            ]
+
+
+form_ : Model -> Html Msg
+form_ model =
+    let
+        submitting =
+            Validation.isSubmitting model.formState
+    in
+    Html.form [ class "card", onSubmit Submit ]
+        [ div [ class "card-body" ] (formBody model submitting)
+        , div [ class "card-footer text-right" ]
+            [ button
+                [ classList [ ( "btn btn-primary", True ), ( "btn-loading", submitting ) ], disabled submitting ]
+                [ text "Save" ]
+            ]
+        ]
 
 
 view : Model -> Html Msg
 view model =
-    container
-        [ pageHeader ("Edit " ++ model.name)
-        , form model
+    AppHtml.container
+        [ AppHtml.pageHeader ("Edit " ++ model.name)
+        , form_ model
         ]

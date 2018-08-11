@@ -2,6 +2,7 @@ module App.Html.Form
     exposing
         ( Input(..)
         , InputAttribute(..)
+        , input
         , linearCardForm
         )
 

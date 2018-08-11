@@ -11,6 +11,7 @@ import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
 import App.Pages.ProjectsList as ProjectsList
 import App.Pages.Settings as Settings
+import App.Pages.SyncingProject as SyncingProject
 import Html
 import Http
 import Navigation
@@ -30,6 +31,7 @@ type Msg
     | TopbarMsg Topbar.Msg
     | ProjectLoaded ProjectScopedPage (Result Http.Error Project)
     | EnvironmentLoaded EnvironmentScopedPage (Result Http.Error Environment)
+    | SyncingProjectMsg SyncingProject.Msg
 
 
 type ProjectScopedPage
@@ -50,6 +52,7 @@ type Content
     | CopyEnvironment CopyEnvironment.Model
     | ProjectsList ProjectsList.Model
     | Settings Settings.Model
+    | SyncingProject SyncingProject.Model
     | Loading
 
 
@@ -147,6 +150,10 @@ setPage model location =
             Settings.init model.baseUrl model.apiToken code
                 |> wrapPage Settings SettingsMsg model
 
+        Just (Route.SyncingProject code state) ->
+            SyncingProject.init model.baseUrl model.apiToken code state
+                |> wrapPage SyncingProject SyncingProjectMsg model
+
 
 init : String -> String -> Navigation.Location -> ( Model, Cmd Msg )
 init baseUrl apiToken =
@@ -237,6 +244,15 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        SyncingProjectMsg subMsg ->
+            case model.page of
+                App _ (SyncingProject subModel) ->
+                    SyncingProject.update subMsg subModel
+                        |> wrapPage SyncingProject SyncingProjectMsg model
+
+                _ ->
+                    ( model, Cmd.none )
+
         TopbarMsg subMsg ->
             case model.page of
                 App subModel content ->
@@ -300,6 +316,10 @@ contentView content =
         Settings subModel ->
             Settings.view subModel
                 |> Html.map SettingsMsg
+
+        SyncingProject subModel ->
+            SyncingProject.view subModel
+                |> Html.map SyncingProjectMsg
 
         Loading ->
             Html.div [] []
