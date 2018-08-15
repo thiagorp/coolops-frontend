@@ -12,6 +12,19 @@ authHeader token =
     Http.header "Authorization" ("Token " ++ token)
 
 
+publicGet : String -> String -> Http.Expect a -> Http.Request a
+publicGet baseUrl path expect =
+    Http.request
+        { method = "GET"
+        , headers = []
+        , url = baseUrl ++ path
+        , body = Http.emptyBody
+        , expect = expect
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
 get : String -> Token -> String -> Http.Expect a -> Http.Request a
 get baseUrl token path expect =
     Http.request
