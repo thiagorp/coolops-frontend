@@ -155,8 +155,9 @@ pageSubscriptions model =
             App.subscriptions subModel
                 |> Sub.map AppMsg
 
-        Public _ ->
-            Sub.none
+        Public subModel ->
+            Public.subscriptions subModel
+                |> Sub.map PublicMsg
 
 
 subscriptions : Model -> Sub Msg

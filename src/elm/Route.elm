@@ -18,6 +18,7 @@ type ProtectedRoute
 type OpenRoute
     = Signup
     | Login
+    | DeploymentLogs String
 
 
 type Route
@@ -82,6 +83,7 @@ openRouteParser =
     Url.oneOf
         [ Url.map Signup (s "signup")
         , Url.map Login (s "login")
+        , Url.map DeploymentLogs (s "deployments" </> string </> s "logs")
         ]
 
 
@@ -131,3 +133,6 @@ toUrl route =
 
         Open Login ->
             "/login"
+
+        Open (DeploymentLogs deploymentId) ->
+            "/deployments/" ++ deploymentId ++ "/logs"
