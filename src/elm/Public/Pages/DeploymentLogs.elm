@@ -60,10 +60,10 @@ spinner { finished } state =
                     "scale(1)"
     in
     case finished of
-        False ->
+        True ->
             div [] []
 
-        True ->
+        False ->
             div
                 [ style
                     [ ( "width", "20px" )
@@ -102,8 +102,7 @@ subscriptions { logs } =
                     Time.every second Tick
 
                 True ->
-                    -- Sub.none
-                    Time.every second Tick
+                    Sub.none
 
         _ ->
             Sub.none
