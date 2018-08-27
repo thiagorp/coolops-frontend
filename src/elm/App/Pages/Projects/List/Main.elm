@@ -1,12 +1,13 @@
-module App.Pages.ProjectsList exposing (..)
+module App.Pages.Projects.List.Main exposing (Model, Msg(..), content, deploymentCol, deploymentStatusCol, environmentRow, init, projectTable, projectTableBody, projectView, update, view)
 
-import App.Api.ListProjects exposing (..)
+import Api exposing (ApiData, ApiResult)
+import Api.Enum.DeploymentStatus exposing (DeploymentStatus(..))
 import App.Html as AppHtml exposing (spinner)
+import App.Pages.Projects.List.Data exposing (..)
 import Date
 import Date.Distance as Distance
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Http exposing (Error)
 import RemoteData exposing (RemoteData(..), WebData)
 import Route exposing (..)
 import Task exposing (..)
@@ -15,7 +16,7 @@ import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type alias Model =
-    { projects : WebData (List Project)
+    { projects : ApiData (List Project)
     , apiToken : String
     , loadedTime : Maybe Time
     , baseUrl : String
@@ -30,7 +31,7 @@ init baseUrl apiToken =
 
 
 type Msg
-    = ProjectsResponse (Result Error (List Project))
+    = ProjectsResponse (ApiResult (List Project))
     | CreateNewButtonClicked
     | LinkClicked Route
     | TimeLoaded Time
@@ -65,10 +66,15 @@ deploymentCol maybeCurrentTime maybeDeploment =
                     text ""
 
                 Just time ->
-                    Distance.inWords (Date.fromTime time) (Date.fromTime deploymentTime)
-                        |> (++) "Last update: "
-                        |> (\s -> s ++ " ago")
-                        |> text
+                    case deploymentTime of
+                        Nothing ->
+                            text "Queued"
+
+                        Just t ->
+                            Distance.inWords (Date.fromTime time) (Date.fromTime t)
+                                |> (++) "Deployed: "
+                                |> (\s -> s ++ " ago")
+                                |> text
     in
     case maybeDeploment of
         Nothing ->

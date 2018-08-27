@@ -1,15 +1,15 @@
-module App.Main exposing (..)
+module App.Main exposing (Content(..), EnvironmentScopedPage(..), Model, Msg(..), Page(..), ProjectScopedPage(..), contentView, inLayout, init, scopedByEnvironment, scopedByProject, setPage, subscriptions, update, view, withTopbar, wrapPage, wrapTopbar)
 
 import App.Api.GetEnvironment exposing (Environment, getEnvironment)
 import App.Api.GetProject exposing (Project, getProject)
 import App.Fragments.Topbar as Topbar
-import App.Pages.CopyEnvironment as CopyEnvironment
 import App.Pages.EditEnvironment as EditEnvironment
 import App.Pages.EditProject as EditProject
+import App.Pages.Environments.Copy.Main as CopyEnvironment
 import App.Pages.NewEnvironment as NewEnvironment
 import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
-import App.Pages.ProjectsList as ProjectsList
+import App.Pages.Projects.List.Main as ProjectsList
 import App.Pages.Settings as Settings
 import App.Pages.SyncingProject as SyncingProject
 import Html

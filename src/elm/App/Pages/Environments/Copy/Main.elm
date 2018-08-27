@@ -1,15 +1,15 @@
-module App.Pages.CopyEnvironment exposing (..)
+module App.Pages.Environments.Copy.Main exposing (Environment, Field(..), Model, Msg(..), form, formConfig, init, submit, update, view)
 
+import Api exposing (ApiData, ApiResult)
 import App.Api.CreateEnvironment as Api
-import App.Api.GetEnvironment exposing (Environment)
-import App.Api.ListProjects as Api exposing (Project)
 import App.Html.Form as Form
+import App.Pages.Environments.Copy.Data exposing (..)
 import Dict exposing (Dict)
 import Form.Validation as Validation
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
-import RemoteData exposing (RemoteData(..), WebData)
+import RemoteData exposing (RemoteData(..))
 import Route
 import SelectList
 import Util exposing (PageHandler, andPerform, noop, return)
@@ -25,7 +25,7 @@ type alias Model =
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
-    , projects : WebData (List Project)
+    , projects : ApiData (List Project)
     }
 
 
@@ -37,7 +37,7 @@ type Msg
     | EnvVarAdded
     | EnvVarRemoved String
     | EnvVarEditClicked String
-    | ProjectsResponse (Result Http.Error (List Project))
+    | ProjectsResponse (ApiResult (List Project))
     | Submit
     | SubmitResponse (Result Http.Error ())
 
@@ -47,7 +47,11 @@ type Field
     | ProjectField
 
 
-init : String -> String -> Environment -> PageHandler Model Msg
+type alias Environment a =
+    { a | environmentVars : Dict String String, projectId : String }
+
+
+init : String -> String -> Environment a -> PageHandler Model Msg
 init baseUrl apiToken { environmentVars, projectId } =
     return
         { name = ""
@@ -61,7 +65,7 @@ init baseUrl apiToken { environmentVars, projectId } =
         , baseUrl = baseUrl
         , projects = Loading
         }
-        |> andPerform (Api.listProjects baseUrl apiToken ProjectsResponse)
+        |> andPerform (listProjects baseUrl apiToken ProjectsResponse)
 
 
 formConfig : Validation.FormConfig Model Field (PageHandler Model Msg)
