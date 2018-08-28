@@ -1,4 +1,4 @@
-module Route exposing (..)
+module Route exposing (OpenRoute(..), ProtectedRoute(..), Route(..), isOpenRoute, isProtectedRoute, modifyTo, openRoot, openRouteParser, procetedRouteParser, protectedRoot, readOpenRoute, readProtectedRoute, redirectTo, toUrl)
 
 import Navigation
 import UrlParser as Url exposing (..)
@@ -12,7 +12,6 @@ type ProtectedRoute
     | NewEnvironment String
     | CopyEnvironment String
     | EditEnvironment String
-    | Settings (Maybe String)
 
 
 type OpenRoute
@@ -97,7 +96,6 @@ procetedRouteParser =
         , Url.map EditEnvironment (s "environments" </> string </> s "edit")
         , Url.map CopyEnvironment (s "environments" </> string </> s "copy")
         , Url.map SyncingProject (s "projects" </> s "syncing" <?> stringParam "code" <?> stringParam "state")
-        , Url.map Settings (s "settings" <?> stringParam "code")
         ]
 
 
@@ -124,9 +122,6 @@ toUrl route =
 
         Protected (CopyEnvironment environmentId) ->
             "/environments/" ++ environmentId ++ "/copy"
-
-        Protected (Settings _) ->
-            "/settings"
 
         Open Signup ->
             "/signup"

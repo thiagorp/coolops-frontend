@@ -16,7 +16,6 @@ import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
 import App.Pages.Projects.Edit.Main as EditProject
 import App.Pages.Projects.List.Main as ProjectsList
-import App.Pages.Settings as Settings
 import App.Pages.SyncingProject as SyncingProject
 import Html
 import Http
@@ -33,7 +32,6 @@ type Msg
     | NewEnvironmentMsg NewEnvironment.Msg
     | EditEnvironmentMsg EditEnvironment.Msg
     | CopyEnvironmentMsg CopyEnvironment.Msg
-    | SettingsMsg Settings.Msg
     | TopbarMsg Topbar.Msg
     | EnvironmentLoaded EnvironmentScopedPage (Result Http.Error Environment)
     | SyncingProjectMsg SyncingProject.Msg
@@ -51,7 +49,6 @@ type Content
     | EditEnvironment EditEnvironment.Model
     | CopyEnvironment CopyEnvironment.Model
     | ProjectsList ProjectsList.Model
-    | Settings Settings.Model
     | SyncingProject SyncingProject.Model
     | Loading
 
@@ -139,10 +136,6 @@ setPage model location =
         Just (Route.CopyEnvironment environmentId) ->
             scopedByEnvironment model environmentId ScopedCopyEnvironment
 
-        Just (Route.Settings code) ->
-            Settings.init model.baseUrl model.apiToken code
-                |> wrapPage Settings SettingsMsg model
-
         Just (Route.SyncingProject code state) ->
             SyncingProject.init model.baseUrl model.apiToken code state
                 |> wrapPage SyncingProject SyncingProjectMsg model
@@ -228,15 +221,6 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        SettingsMsg subMsg ->
-            case model.page of
-                App _ (Settings subModel) ->
-                    Settings.update subMsg subModel
-                        |> wrapPage Settings SettingsMsg model
-
-                _ ->
-                    ( model, Cmd.none )
-
         SyncingProjectMsg subMsg ->
             case model.page of
                 App _ (SyncingProject subModel) ->
@@ -290,10 +274,6 @@ contentView content =
         NewEnvironment subModel ->
             NewEnvironment.view subModel
                 |> Html.map NewEnvironmentMsg
-
-        Settings subModel ->
-            Settings.view subModel
-                |> Html.map SettingsMsg
 
         SyncingProject subModel ->
             SyncingProject.view subModel
