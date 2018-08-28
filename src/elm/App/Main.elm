@@ -12,10 +12,10 @@ import App.Fragments.Topbar as Topbar
 import App.Pages.EditEnvironment as EditEnvironment
 import App.Pages.Environments.Copy.Main as CopyEnvironment
 import App.Pages.Environments.New.Main as NewEnvironment
-import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
 import App.Pages.Projects.Edit.Main as EditProject
 import App.Pages.Projects.List.Main as ProjectsList
+import App.Pages.Projects.New.Main as NewProject
 import App.Pages.SyncingProject as SyncingProject
 import Html
 import Http

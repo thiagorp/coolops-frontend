@@ -1,4 +1,10 @@
-module App.Pages.NewProject exposing (..)
+module App.Pages.Projects.New.Main exposing
+    ( Model
+    , Msg(..)
+    , init
+    , update
+    , view
+    )
 
 import App.Api.CreateProject as Api
 import App.Html exposing (..)
