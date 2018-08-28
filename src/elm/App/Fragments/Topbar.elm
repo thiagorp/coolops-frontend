@@ -1,7 +1,6 @@
 module App.Fragments.Topbar exposing (Model, Msg, init, subscriptions, update, view)
 
 import App.Api.GetProfile as Api exposing (Profile)
-import App.Html as AppHtml
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -76,14 +75,7 @@ update msg model =
 
 dropdownMenu : List (Html Msg)
 dropdownMenu =
-    [ AppHtml.a (Route.Protected (Route.Settings Nothing))
-        RedirectTo
-        [ class "dropdown-item" ]
-        [ i [ class "dropdown-icon fe fe-settings" ] []
-        , text "Settings"
-        ]
-    , div [ class "dropdown-divider" ] []
-    , a [ class "dropdown-item", href "#", onClick LogOut ]
+    [ a [ class "dropdown-item", href "#", onClick LogOut ]
         [ i [ class "dropdown-icon fe fe-log-out" ] []
         , text "Sign out"
         ]
