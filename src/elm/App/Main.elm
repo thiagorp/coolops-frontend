@@ -9,8 +9,8 @@ module App.Main exposing
 
 import App.Api.GetEnvironment exposing (Environment, getEnvironment)
 import App.Fragments.Topbar as Topbar
-import App.Pages.EditEnvironment as EditEnvironment
 import App.Pages.Environments.Copy.Main as CopyEnvironment
+import App.Pages.Environments.Edit.Main as EditEnvironment
 import App.Pages.Environments.New.Main as NewEnvironment
 import App.Pages.NotFound as NotFound
 import App.Pages.Projects.Edit.Main as EditProject
@@ -38,8 +38,7 @@ type Msg
 
 
 type EnvironmentScopedPage
-    = ScopedEditEnvironment
-    | ScopedCopyEnvironment
+    = ScopedCopyEnvironment
 
 
 type Content
@@ -131,7 +130,8 @@ setPage model location =
                 |> wrapPage NewEnvironment NewEnvironmentMsg model
 
         Just (Route.EditEnvironment environmentId) ->
-            scopedByEnvironment model environmentId ScopedEditEnvironment
+            EditEnvironment.init model.baseUrl model.apiToken environmentId
+                |> wrapPage EditEnvironment EditEnvironmentMsg model
 
         Just (Route.CopyEnvironment environmentId) ->
             scopedByEnvironment model environmentId ScopedCopyEnvironment
@@ -186,10 +186,6 @@ update msg model =
 
                 Ok environment ->
                     case page of
-                        ScopedEditEnvironment ->
-                            EditEnvironment.init model.baseUrl model.apiToken environment
-                                |> wrapPage EditEnvironment EditEnvironmentMsg model
-
                         ScopedCopyEnvironment ->
                             CopyEnvironment.init model.baseUrl model.apiToken environment
                                 |> wrapPage CopyEnvironment CopyEnvironmentMsg model

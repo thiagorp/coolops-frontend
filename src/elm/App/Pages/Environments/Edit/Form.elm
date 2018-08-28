@@ -1,8 +1,14 @@
-module App.Pages.EditEnvironment exposing (..)
+module App.Pages.Environments.Edit.Form exposing
+    ( Model
+    , Msg
+    , init
+    , update
+    , view
+    )
 
-import App.Api.GetEnvironment exposing (Environment)
 import App.Api.UpdateEnvironment as Api
 import App.Html.Form as Form
+import App.Pages.Environments.Edit.Data exposing (Environment)
 import Dict exposing (Dict)
 import Form.Validation as Validation
 import Html exposing (..)

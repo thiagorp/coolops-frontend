@@ -27,6 +27,16 @@ selection constructor =
     Object.selection constructor
 
 
+type alias EnvironmentRequiredArguments =
+    { id : String }
+
+
+{-| -}
+environment : EnvironmentRequiredArguments -> SelectionSet decodesTo Api.Object.Environment -> Field (Maybe decodesTo) RootQuery
+environment requiredArgs object =
+    Object.selectionField "environment" [ Argument.required "id" requiredArgs.id Encode.string ] object (identity >> Decode.nullable)
+
+
 {-| List of projects
 -}
 projects : SelectionSet decodesTo Api.Object.Project -> Field (List decodesTo) RootQuery
