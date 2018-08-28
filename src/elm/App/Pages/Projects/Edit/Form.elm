@@ -1,46 +1,48 @@
-module App.Pages.EditProject exposing (..)
+module App.Pages.Projects.Edit.Form exposing
+    ( Model
+    , Msg
+    , init
+    , update
+    , view
+    )
 
 import App.Api.EditProject as Api
-import App.Api.GetProject exposing (Project)
-import App.Api.GetSlackProjectIntegration exposing (..)
 import App.Html as AppHtml
 import App.Html.Form as Form
+import App.Pages.Projects.Edit.Data as Data
 import Form.Validation as Validation
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
-import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type alias Model =
-    { id : String
+    { apiToken : String
+    , id : String
     , name : String
     , deploymentImage : String
     , accessToken : String
-    , apiToken : String
+    , slackClientId : String
     , formState : Validation.FormState Field
     , baseUrl : String
-    , slackConfig : WebData SlackProjectIntegration
     }
 
 
-init : String -> String -> Project -> PageHandler Model Msg
-init baseUrl apiToken { id, deploymentImage, name, accessToken } =
+init : String -> String -> Data.Project -> Data.SlackConfiguration -> PageHandler Model Msg
+init baseUrl apiToken { id, name, deploymentImage, accessToken } { clientId } =
     return
-        { id = id
+        { apiToken = apiToken
+        , baseUrl = baseUrl
+        , formState = Validation.initialState
+        , id = id
         , name = name
         , deploymentImage = deploymentImage
         , accessToken = accessToken
-        , apiToken = apiToken
-        , formState = Validation.initialState
-        , baseUrl = baseUrl
-        , slackConfig = Loading
+        , slackClientId = clientId
         }
-        |> andPerform
-            (getSlackProjectIntegration baseUrl apiToken id SlackConfigResponse)
 
 
 type Field
@@ -50,7 +52,6 @@ type Field
 
 type Msg
     = FieldUpdated Field String
-    | SlackConfigResponse (Result Http.Error SlackProjectIntegration)
     | Submit
     | SubmitResponse (Result Http.Error ())
 
@@ -94,10 +95,6 @@ update msg model =
                 |> Validation.validate formConfig
                 |> return
 
-        SlackConfigResponse result ->
-            { model | slackConfig = RemoteData.fromResult result }
-                |> return
-
         Submit ->
             Validation.submit formConfig model
 
@@ -110,9 +107,9 @@ update msg model =
                 |> andPerform (Route.redirectTo (Route.Protected Route.ProjectsList))
 
 
-redirectUri : SlackProjectIntegration -> String -> String
-redirectUri { clientId } projectId =
-    "https://slack.com/oauth/authorize?client_id=" ++ clientId ++ "&scope=chat:write,commands&single_channel=true&state=" ++ projectId
+redirectUri : Model -> String
+redirectUri { slackClientId, id } =
+    "https://slack.com/oauth/authorize?client_id=" ++ slackClientId ++ "&scope=chat:write,commands&single_channel=true&state=" ++ id
 
 
 formBody : Model -> Bool -> List (Html Msg)
@@ -155,26 +152,15 @@ formBody model submitting =
 
 
 slackProjectIntegrationInput : Model -> List (Html Msg)
-slackProjectIntegrationInput { slackConfig, id } =
-    case slackConfig of
-        NotAsked ->
+slackProjectIntegrationInput model =
+    [ div [ class "form-group" ]
+        [ label [ class "form-label" ] [ text "Slack synchronization" ]
+        , AppHtml.externalLink
+            (redirectUri model)
             []
-
-        Loading ->
-            []
-
-        Failure _ ->
-            []
-
-        Success config ->
-            [ div [ class "form-group" ]
-                [ label [ class "form-label" ] [ text "Slack synchronization" ]
-                , AppHtml.externalLink
-                    (redirectUri config id)
-                    []
-                    [ text "Sync" ]
-                ]
-            ]
+            [ text "Sync" ]
+        ]
+    ]
 
 
 form_ : Model -> Html Msg

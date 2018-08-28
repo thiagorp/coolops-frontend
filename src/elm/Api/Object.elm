@@ -23,3 +23,11 @@ type Param
 
 type Project
     = Project
+
+
+type SlackConfiguration
+    = SlackConfiguration
+
+
+type SlackProjectIntegration
+    = SlackProjectIntegration

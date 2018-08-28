@@ -1,4 +1,4 @@
-module App.Pages.NotFound exposing (..)
+module App.Pages.NotFound exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -12,7 +12,7 @@ view =
                 [ i [ class "si si-exclamation" ] []
                 , text "404"
                 ]
-            , h1 [ class "h2 mb-3" ] [ text "Oops.. You just found an error page.." ]
-            , p [ class "h4 text-muted font-weight-normal mb-7" ] [ text "We are sorry but our service is currently not available&hellip;" ]
+            , h1 [ class "h2 mb-3" ] [ text "The page you are looking for doesn't exist." ]
+            , p [ class "h4 text-muted font-weight-normal mb-7" ] [ text "Either you are not allowed to see this page or it doesn't exist." ]
             ]
         ]

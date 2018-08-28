@@ -16,7 +16,7 @@ import Api.Object.Project as ProjectApi
 import Api.Query as Query
 import Graphqelm.Field as Field
 import Graphqelm.Operation exposing (RootQuery)
-import Graphqelm.SelectionSet exposing (SelectionSet, hardcoded, with)
+import Graphqelm.SelectionSet exposing (SelectionSet, with)
 import Time exposing (Time)
 
 

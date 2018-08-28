@@ -56,6 +56,12 @@ environments object =
 
 
 {-| -}
+slackIntegration : SelectionSet decodesTo Api.Object.SlackProjectIntegration -> Field (Maybe decodesTo) Api.Object.Project
+slackIntegration object =
+    Object.selectionField "slackIntegration" [] object (identity >> Decode.nullable)
+
+
+{-| -}
 createdAt : Field Int Api.Object.Project
 createdAt =
     Object.fieldDecoder "createdAt" [] Decode.int

@@ -1,7 +1,14 @@
-module App.Pages.NewEnvironment exposing (..)
+module App.Pages.Environments.New.Main exposing
+    ( Field(..)
+    , Model
+    , Msg(..)
+    , init
+    , submit
+    , update
+    , view
+    )
 
 import App.Api.CreateEnvironment as Api
-import App.Api.GetProject exposing (Project)
 import App.Html.Form as Form
 import Dict exposing (Dict)
 import Form.Validation as Validation
@@ -19,7 +26,6 @@ type alias Model =
     , editingValue : String
     , editingKeyError : Maybe (List String)
     , projectId : String
-    , projectName : String
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
@@ -41,9 +47,9 @@ type Field
     = NameField
 
 
-init : String -> String -> Project -> PageHandler Model Msg
-init baseUrl apiToken { id, name } =
-    return (Model "" Dict.empty "" "" Nothing id name apiToken Validation.initialState baseUrl)
+init : String -> String -> String -> PageHandler Model Msg
+init baseUrl apiToken projectId =
+    return (Model "" Dict.empty "" "" Nothing projectId apiToken Validation.initialState baseUrl)
 
 
 formConfig : Validation.FormConfig Model Field (PageHandler Model Msg)
@@ -175,6 +181,6 @@ view : Model -> Html Msg
 view model =
     div [ class "container" ]
         [ div [ class "page-header" ]
-            [ h1 [ class "page-title" ] [ text (model.projectName ++ " - Create environment") ] ]
+            [ h1 [ class "page-title" ] [ text "Create environment" ] ]
         , form model
         ]

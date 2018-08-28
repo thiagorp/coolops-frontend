@@ -34,6 +34,22 @@ projects object =
     Object.selectionField "projects" [] object (identity >> Decode.list)
 
 
+type alias ProjectRequiredArguments =
+    { id : String }
+
+
+{-| -}
+project : ProjectRequiredArguments -> SelectionSet decodesTo Api.Object.Project -> Field (Maybe decodesTo) RootQuery
+project requiredArgs object =
+    Object.selectionField "project" [ Argument.required "id" requiredArgs.id Encode.string ] object (identity >> Decode.nullable)
+
+
+{-| -}
+slackConfiguration : SelectionSet decodesTo Api.Object.SlackConfiguration -> Field decodesTo RootQuery
+slackConfiguration object =
+    Object.selectionField "slackConfiguration" [] object identity
+
+
 type alias BuildsOptionalArguments =
     { page : OptionalArgument Int, pageSize : OptionalArgument Int }
 

@@ -1,14 +1,20 @@
-module App.Main exposing (Content(..), EnvironmentScopedPage(..), Model, Msg(..), Page(..), ProjectScopedPage(..), contentView, inLayout, init, scopedByEnvironment, scopedByProject, setPage, subscriptions, update, view, withTopbar, wrapPage, wrapTopbar)
+module App.Main exposing
+    ( Model
+    , Msg(..)
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import App.Api.GetEnvironment exposing (Environment, getEnvironment)
-import App.Api.GetProject exposing (Project, getProject)
 import App.Fragments.Topbar as Topbar
 import App.Pages.EditEnvironment as EditEnvironment
-import App.Pages.EditProject as EditProject
 import App.Pages.Environments.Copy.Main as CopyEnvironment
-import App.Pages.NewEnvironment as NewEnvironment
+import App.Pages.Environments.New.Main as NewEnvironment
 import App.Pages.NewProject as NewProject
 import App.Pages.NotFound as NotFound
+import App.Pages.Projects.Edit.Main as EditProject
 import App.Pages.Projects.List.Main as ProjectsList
 import App.Pages.Settings as Settings
 import App.Pages.SyncingProject as SyncingProject
@@ -29,14 +35,8 @@ type Msg
     | CopyEnvironmentMsg CopyEnvironment.Msg
     | SettingsMsg Settings.Msg
     | TopbarMsg Topbar.Msg
-    | ProjectLoaded ProjectScopedPage (Result Http.Error Project)
     | EnvironmentLoaded EnvironmentScopedPage (Result Http.Error Environment)
     | SyncingProjectMsg SyncingProject.Msg
-
-
-type ProjectScopedPage
-    = ScopedNewEnvironment
-    | ScopedEditProject
 
 
 type EnvironmentScopedPage
@@ -102,15 +102,6 @@ wrapPage toContent toMsg model ( subModel, subCmds ) =
     withTopbar model content cmd
 
 
-scopedByProject : Model -> String -> ProjectScopedPage -> ( Model, Cmd Msg )
-scopedByProject model projectId page =
-    let
-        cmd =
-            getProject model.baseUrl model.apiToken projectId (ProjectLoaded page)
-    in
-    withTopbar model Loading cmd
-
-
 scopedByEnvironment : Model -> String -> EnvironmentScopedPage -> ( Model, Cmd Msg )
 scopedByEnvironment model environmentId page =
     let
@@ -135,10 +126,12 @@ setPage model location =
                 |> wrapPage NewProject NewProjectMsg model
 
         Just (Route.EditProject projectId) ->
-            scopedByProject model projectId ScopedEditProject
+            EditProject.init model.baseUrl model.apiToken projectId
+                |> wrapPage EditProject EditProjectMsg model
 
         Just (Route.NewEnvironment projectId) ->
-            scopedByProject model projectId ScopedNewEnvironment
+            NewEnvironment.init model.baseUrl model.apiToken projectId
+                |> wrapPage NewEnvironment NewEnvironmentMsg model
 
         Just (Route.EditEnvironment environmentId) ->
             scopedByEnvironment model environmentId ScopedEditEnvironment
@@ -261,21 +254,6 @@ update msg model =
 
                 NotFound ->
                     ( model, Cmd.none )
-
-        ProjectLoaded page result ->
-            case result of
-                Err _ ->
-                    ( { model | page = NotFound }, Cmd.none )
-
-                Ok project ->
-                    case page of
-                        ScopedNewEnvironment ->
-                            NewEnvironment.init model.baseUrl model.apiToken project
-                                |> wrapPage NewEnvironment NewEnvironmentMsg model
-
-                        ScopedEditProject ->
-                            EditProject.init model.baseUrl model.apiToken project
-                                |> wrapPage EditProject EditProjectMsg model
 
 
 inLayout : Topbar.Model -> Html.Html Msg -> Html.Html Msg
