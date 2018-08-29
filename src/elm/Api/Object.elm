@@ -9,6 +9,10 @@ type Build
     = Build
 
 
+type Company
+    = Company
+
+
 type Deployment
     = Deployment
 
@@ -31,3 +35,7 @@ type SlackConfiguration
 
 type SlackProjectIntegration
     = SlackProjectIntegration
+
+
+type User
+    = User

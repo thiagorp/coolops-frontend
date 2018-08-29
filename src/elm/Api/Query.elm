@@ -37,6 +37,12 @@ environment requiredArgs object =
     Object.selectionField "environment" [ Argument.required "id" requiredArgs.id Encode.string ] object (identity >> Decode.nullable)
 
 
+{-| -}
+me : SelectionSet decodesTo Api.Object.User -> Field decodesTo RootQuery
+me object =
+    Object.selectionField "me" [] object identity
+
+
 {-| List of projects
 -}
 projects : SelectionSet decodesTo Api.Object.Project -> Field (List decodesTo) RootQuery

@@ -1,10 +1,17 @@
-module App.Fragments.Topbar exposing (Model, Msg, init, subscriptions, update, view)
+module App.Fragments.Topbar.Main exposing
+    ( Model
+    , Msg
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
-import App.Api.GetProfile as Api exposing (Profile)
+import Api
+import App.Fragments.Topbar.Data as Data
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Http exposing (Error)
 import Mouse
 import Ports
 import RemoteData exposing (RemoteData(..), WebData)
@@ -16,20 +23,20 @@ type Msg
     = Toggle
     | CloseDropdown
     | RedirectTo Route.Route
-    | ProfileLoaded (Result Error Profile)
+    | ProfileLoaded (Api.ApiResult Data.User)
     | LogOut
 
 
 type alias Model =
     { dropdownOpened : Bool
-    , profile : WebData Profile
+    , user : Api.ApiData Data.User
     }
 
 
 init : String -> String -> PageHandler Model Msg
 init baseUrl apiToken =
-    return { dropdownOpened = False, profile = Loading }
-        |> andPerform (Api.getProfile baseUrl apiToken ProfileLoaded)
+    return { dropdownOpened = False, user = Loading }
+        |> andPerform (Data.getProfile baseUrl apiToken ProfileLoaded)
 
 
 subscriptions : Model -> Sub Msg
@@ -51,7 +58,7 @@ update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
         ProfileLoaded result ->
-            { model | profile = RemoteData.fromResult result }
+            { model | user = RemoteData.fromResult result }
                 |> return
 
         Toggle ->
@@ -84,19 +91,19 @@ dropdownMenu =
 
 dropdown : Model -> Html Msg
 dropdown model =
-    case model.profile of
-        Success profile ->
+    case model.user of
+        Success user ->
             div [ class "dropdown" ]
                 [ a
                     [ class "nav-link pr-0 leading-none"
                     , attribute "data-toggle" "dropdown"
                     , onClick Toggle
                     ]
-                    [ span [ class "avatar" ] [ text (String.left 1 profile.user.first_name ++ String.left 1 profile.user.last_name) ]
+                    [ span [ class "avatar" ] [ text (String.left 1 user.firstName ++ String.left 1 user.lastName) ]
                     , span
                         [ class "ml-2 d-none d-lg-block" ]
-                        [ span [ class "text-default" ] [ text (profile.user.first_name ++ " " ++ profile.user.last_name) ]
-                        , small [ class "text-muted d-block mt-1" ] [ text profile.company.name ]
+                        [ span [ class "text-default" ] [ text (user.firstName ++ " " ++ user.lastName) ]
+                        , small [ class "text-muted d-block mt-1" ] [ text user.company.name ]
                         ]
                     ]
                 , div

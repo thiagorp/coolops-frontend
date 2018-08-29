@@ -7,7 +7,7 @@ module App.Main exposing
     , view
     )
 
-import App.Fragments.Topbar as Topbar
+import App.Fragments.Topbar.Main as Topbar
 import App.Pages.Environments.Copy.Main as CopyEnvironment
 import App.Pages.Environments.Edit.Main as EditEnvironment
 import App.Pages.Environments.New.Main as NewEnvironment
