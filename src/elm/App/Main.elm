@@ -7,7 +7,6 @@ module App.Main exposing
     , view
     )
 
-import App.Api.GetEnvironment exposing (Environment, getEnvironment)
 import App.Fragments.Topbar as Topbar
 import App.Pages.Environments.Copy.Main as CopyEnvironment
 import App.Pages.Environments.Edit.Main as EditEnvironment
@@ -18,7 +17,6 @@ import App.Pages.Projects.List.Main as ProjectsList
 import App.Pages.Projects.New.Main as NewProject
 import App.Pages.SyncingProject as SyncingProject
 import Html
-import Http
 import Navigation
 import Route
 import Util
@@ -33,12 +31,7 @@ type Msg
     | EditEnvironmentMsg EditEnvironment.Msg
     | CopyEnvironmentMsg CopyEnvironment.Msg
     | TopbarMsg Topbar.Msg
-    | EnvironmentLoaded EnvironmentScopedPage (Result Http.Error Environment)
     | SyncingProjectMsg SyncingProject.Msg
-
-
-type EnvironmentScopedPage
-    = ScopedCopyEnvironment
 
 
 type Content
@@ -98,15 +91,6 @@ wrapPage toContent toMsg model ( subModel, subCmds ) =
     withTopbar model content cmd
 
 
-scopedByEnvironment : Model -> String -> EnvironmentScopedPage -> ( Model, Cmd Msg )
-scopedByEnvironment model environmentId page =
-    let
-        cmd =
-            getEnvironment model.baseUrl model.apiToken environmentId (EnvironmentLoaded page)
-    in
-    withTopbar model Loading cmd
-
-
 setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
 setPage model location =
     case Route.readProtectedRoute location of
@@ -134,7 +118,8 @@ setPage model location =
                 |> wrapPage EditEnvironment EditEnvironmentMsg model
 
         Just (Route.CopyEnvironment environmentId) ->
-            scopedByEnvironment model environmentId ScopedCopyEnvironment
+            CopyEnvironment.init model.baseUrl model.apiToken environmentId
+                |> wrapPage CopyEnvironment CopyEnvironmentMsg model
 
         Just (Route.SyncingProject code state) ->
             SyncingProject.init model.baseUrl model.apiToken code state
@@ -178,17 +163,6 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
-
-        EnvironmentLoaded page result ->
-            case result of
-                Err _ ->
-                    ( { model | page = NotFound }, Cmd.none )
-
-                Ok environment ->
-                    case page of
-                        ScopedCopyEnvironment ->
-                            CopyEnvironment.init model.baseUrl model.apiToken environment
-                                |> wrapPage CopyEnvironment CopyEnvironmentMsg model
 
         ProjectsListMsg subMsg ->
             case model.page of

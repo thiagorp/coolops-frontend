@@ -50,6 +50,12 @@ lastDeployment object =
 
 
 {-| -}
+project : SelectionSet decodesTo Api.Object.Project -> Field decodesTo Api.Object.Environment
+project object =
+    Object.selectionField "project" [] object identity
+
+
+{-| -}
 createdAt : Field Int Api.Object.Environment
 createdAt =
     Object.fieldDecoder "createdAt" [] Decode.int
