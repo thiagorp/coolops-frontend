@@ -9,6 +9,7 @@ module App.Fragments.Topbar.Main exposing
 
 import Api
 import App.Fragments.Topbar.Data as Data
+import App.Html as AppHtml
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -22,7 +23,7 @@ import Util exposing (PageHandler, andPerform, noop, return)
 type Msg
     = Toggle
     | CloseDropdown
-    | RedirectTo Route.Route
+    | LinkClicked Route.Route
     | ProfileLoaded (Api.ApiResult Data.User)
     | LogOut
 
@@ -69,10 +70,8 @@ update msg model =
         CloseDropdown ->
             return { model | dropdownOpened = False }
 
-        RedirectTo route ->
-            model
-                |> toggleDropdown
-                |> return
+        LinkClicked route ->
+            return { model | dropdownOpened = False }
                 |> andPerform (Route.redirectTo route)
 
         LogOut ->
@@ -119,9 +118,13 @@ dropdown model =
             div [] []
 
 
-logo : Html msg
+logo : Html Msg
 logo =
-    a [ class "header-brand" ] [ text "CoolOps.io" ]
+    AppHtml.a
+        (Route.Protected Route.Home)
+        LinkClicked
+        [ class "header-brand" ]
+        [ text "CoolOps.io" ]
 
 
 view : Model -> Html Msg

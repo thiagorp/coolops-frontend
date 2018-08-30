@@ -97,6 +97,10 @@ setPage model location =
         Nothing ->
             ( { model | page = NotFound }, Cmd.none )
 
+        Just Route.Home ->
+            ProjectsList.init model.baseUrl model.apiToken
+                |> wrapPage ProjectsList ProjectsListMsg model
+
         Just Route.ProjectsList ->
             ProjectsList.init model.baseUrl model.apiToken
                 |> wrapPage ProjectsList ProjectsListMsg model

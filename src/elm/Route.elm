@@ -5,7 +5,8 @@ import UrlParser as Url exposing (..)
 
 
 type ProtectedRoute
-    = ProjectsList
+    = Home
+    | ProjectsList
     | NewProject
     | EditProject String
     | SyncingProject (Maybe String) (Maybe String)
@@ -32,7 +33,7 @@ openRoot =
 
 protectedRoot : Route
 protectedRoot =
-    Protected ProjectsList
+    Protected Home
 
 
 redirectTo : Route -> Cmd msg
@@ -89,7 +90,7 @@ openRouteParser =
 procetedRouteParser : Url.Parser (ProtectedRoute -> a) a
 procetedRouteParser =
     Url.oneOf
-        [ Url.map ProjectsList top
+        [ Url.map Home top
         , Url.map NewProject (s "projects" </> s "new")
         , Url.map EditProject (s "projects" </> string </> s "edit")
         , Url.map NewEnvironment (s "projects" </> string </> s "environments" </> s "new")
@@ -102,6 +103,9 @@ procetedRouteParser =
 toUrl : Route -> String
 toUrl route =
     case route of
+        Protected Home ->
+            "/"
+
         Protected ProjectsList ->
             "/"
 
