@@ -1,4 +1,4 @@
-module Public.Pages.Login exposing (..)
+module Public.Pages.Login exposing (Field(..), Model, Msg(..), formConfig, init, login, update, updateField, view)
 
 import Form.Html exposing (..)
 import Form.Validation as Validation
@@ -11,6 +11,7 @@ import Public.AppHtml exposing (a)
 import Public.Layouts.Authentication as AuthenticationLayout
 import Route exposing (OpenRoute(Signup), Route(Open), toUrl)
 import Util exposing (PageHandler, andPerform, noop, return)
+
 
 
 ---- MODEL ----
@@ -146,8 +147,9 @@ view model =
     in
     AuthenticationLayout.layout
         [ AuthenticationLayout.form submitting Login "Login" serverError inputs
-        , div [ class "text-center text-muted" ]
-            [ text "Don't have account yet? "
-            , a (Open Signup) LinkClicked [] [ text "Sign up" ]
-            ]
+
+        -- , div [ class "text-center text-muted" ]
+        -- [ text "Don't have account yet? "
+        -- , a (Open Signup) LinkClicked [] [ text "Sign up" ]
+        -- ]
         ]
