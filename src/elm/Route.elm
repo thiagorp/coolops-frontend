@@ -1,4 +1,17 @@
-module Route exposing (OpenRoute(..), ProtectedRoute(..), Route(..), isOpenRoute, isProtectedRoute, modifyTo, openRoot, openRouteParser, procetedRouteParser, protectedRoot, readOpenRoute, readProtectedRoute, redirectTo, toUrl)
+module Route exposing
+    ( OpenRoute(..)
+    , ProtectedRoute(..)
+    , Route(..)
+    , isOpenRoute
+    , isProtectedRoute
+    , modifyTo
+    , openRoot
+    , protectedRoot
+    , readOpenRoute
+    , readProtectedRoute
+    , redirectTo
+    , toUrl
+    )
 
 import Navigation
 import UrlParser as Url exposing (..)
@@ -81,7 +94,7 @@ readProtectedRoute =
 openRouteParser : Url.Parser (OpenRoute -> a) a
 openRouteParser =
     Url.oneOf
-        [ Url.map Signup (s "signup")
+        [ Url.map Signup (s "__signup__")
         , Url.map Login (s "login")
         , Url.map DeploymentLogs (s "deployments" </> string </> s "logs")
         ]
@@ -128,7 +141,7 @@ toUrl route =
             "/environments/" ++ environmentId ++ "/copy"
 
         Open Signup ->
-            "/signup"
+            "/__signup__"
 
         Open Login ->
             "/login"

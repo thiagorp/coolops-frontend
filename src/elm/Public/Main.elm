@@ -1,4 +1,11 @@
-module Public.Main exposing (Model, Msg(..), Page(..), init, setPage, subscriptions, update, view, wrapPage)
+module Public.Main exposing
+    ( Model
+    , Msg(..)
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Html
 import Navigation
@@ -51,9 +58,8 @@ setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
 setPage model location =
     case Route.readOpenRoute location of
         Just Route.Signup ->
-            ( { model | page = NotFound }, Cmd.none )
+            wrapPage Signup SignupMsg model (Signup.init model.baseUrl)
 
-        -- wrapPage Signup SignupMsg model (Signup.init model.baseUrl)
         Just Route.Login ->
             wrapPage Login LoginMsg model (Login.init model.baseUrl)
 
