@@ -5,6 +5,7 @@ import Auth.Main as Auth
 import Html
 import Navigation
 import Ports exposing (onSessionChange)
+import Public.Main as Public
 import Route
 
 
@@ -13,12 +14,14 @@ type Msg
     | SessionChanged (Maybe String)
     | AppMsg App.Msg
     | AuthMsg Auth.Msg
+    | PublicMsg Public.Msg
 
 
 type Page
     = Transitioning
     | App App.Model
     | Auth Auth.Model
+    | Public Public.Model
 
 
 type alias Flags =
@@ -39,60 +42,67 @@ wrapPage toPage toCmd model ( subModel, subCmd ) =
     ( { model | page = toPage subModel }, Cmd.map toCmd subCmd )
 
 
-handleRoute : Model -> Route.Route -> Bool -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-handleRoute model route redirect return =
-    case redirect of
-        True ->
-            ( { model | page = Transitioning }, Route.redirectTo route )
-
-        False ->
-            return
-
-
 redirectTo : Route.Route -> Model -> ( Model, Cmd Msg )
 redirectTo route model =
     ( { model | page = Transitioning }, Route.redirectTo route )
 
 
-setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
-setPage model location =
-    let
-        handleAuthRoute =
-            Route.isProtectedRoute location
-                |> handleRoute model Route.authRoot
-
-        handleProtectedRoute =
-            Route.isAuthRoute location
-                |> handleRoute model Route.protectedRoot
-    in
-    case ( model.page, model.token ) of
-        ( Transitioning, Just token ) ->
-            App.init model.baseUrl token location
-                |> wrapPage App AppMsg model
-                |> handleProtectedRoute
-
-        ( Transitioning, Nothing ) ->
-            Auth.init model.baseUrl location
-                |> wrapPage Auth AuthMsg model
-                |> handleAuthRoute
-
-        ( App subModel, Just _ ) ->
-            App.update (App.UrlChanged location) subModel
-                |> wrapPage App AppMsg model
-                |> handleProtectedRoute
-
-        ( App _, Nothing ) ->
+handleAppLocation : Model -> Navigation.Location -> ( Model, Cmd Msg )
+handleAppLocation model location =
+    case model.token of
+        Nothing ->
             model
                 |> redirectTo Route.authRoot
 
-        ( Auth subModel, Nothing ) ->
-            Auth.update (Auth.UrlChanged location) subModel
-                |> wrapPage Auth AuthMsg model
-                |> handleAuthRoute
+        Just token ->
+            case model.page of
+                App subModel ->
+                    App.update (App.UrlChanged location) subModel
+                        |> wrapPage App AppMsg model
 
-        ( Auth _, Just _ ) ->
+                _ ->
+                    App.init model.baseUrl token location
+                        |> wrapPage App AppMsg model
+
+
+handleAuthLocation : Model -> Navigation.Location -> ( Model, Cmd Msg )
+handleAuthLocation model location =
+    case model.token of
+        Just _ ->
             model
                 |> redirectTo Route.protectedRoot
+
+        Nothing ->
+            case model.page of
+                Auth subModel ->
+                    Auth.update (Auth.UrlChanged location) subModel
+                        |> wrapPage Auth AuthMsg model
+
+                _ ->
+                    Auth.init model.baseUrl location
+                        |> wrapPage Auth AuthMsg model
+
+
+setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
+setPage model location =
+    case Route.readPublicRoute location of
+        Nothing ->
+            case Route.isProtectedRoute location of
+                False ->
+                    handleAuthLocation model location
+
+                True ->
+                    handleAppLocation model location
+
+        Just publicPage ->
+            case model.page of
+                Public subModel ->
+                    Public.update (Public.UrlChanged publicPage) subModel
+                        |> wrapPage Public PublicMsg model
+
+                _ ->
+                    Public.init model.baseUrl publicPage
+                        |> wrapPage Public PublicMsg model
 
 
 init : Flags -> Navigation.Location -> ( Model, Cmd Msg )
@@ -102,8 +112,8 @@ init { token, baseUrl } =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model.page ) of
-        ( SessionChanged newToken, _ ) ->
+    case msg of
+        SessionChanged newToken ->
             let
                 page =
                     case newToken of
@@ -115,19 +125,35 @@ update msg model =
             in
             ( { model | token = newToken }, Route.redirectTo page )
 
-        ( UrlChanged location, _ ) ->
+        UrlChanged location ->
             setPage model location
 
-        ( AuthMsg subMsg, Auth subModel ) ->
-            Auth.update subMsg subModel
-                |> wrapPage Auth AuthMsg model
+        AuthMsg subMsg ->
+            case model.page of
+                Auth subModel ->
+                    Auth.update subMsg subModel
+                        |> wrapPage Auth AuthMsg model
 
-        ( AppMsg subMsg, App subModel ) ->
-            App.update subMsg subModel
-                |> wrapPage App AppMsg model
+                _ ->
+                    ( model, Cmd.none )
 
-        _ ->
-            ( model, Cmd.none )
+        AppMsg subMsg ->
+            case model.page of
+                App subModel ->
+                    App.update subMsg subModel
+                        |> wrapPage App AppMsg model
+
+                _ ->
+                    ( model, Cmd.none )
+
+        PublicMsg subMsg ->
+            case model.page of
+                Public subModel ->
+                    Public.update subMsg subModel
+                        |> wrapPage Public PublicMsg model
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Html.Html Msg
@@ -144,6 +170,10 @@ view model =
             Auth.view subModel
                 |> Html.map AuthMsg
 
+        Public subModel ->
+            Public.view subModel
+                |> Html.map PublicMsg
+
 
 pageSubscriptions : Model -> Sub Msg
 pageSubscriptions model =
@@ -158,6 +188,10 @@ pageSubscriptions model =
         Auth subModel ->
             Auth.subscriptions subModel
                 |> Sub.map AuthMsg
+
+        Public subModel ->
+            Public.subscriptions subModel
+                |> Sub.map PublicMsg
 
 
 subscriptions : Model -> Sub Msg
