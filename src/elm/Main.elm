@@ -4,6 +4,7 @@ import App.Main as App
 import Auth.Main as Auth
 import Html
 import Navigation
+import NotFound
 import Ports exposing (onSessionChange)
 import Public.Main as Public
 import Route
@@ -22,6 +23,7 @@ type Page
     | App App.Model
     | Auth Auth.Model
     | Public Public.Model
+    | NotFound
 
 
 type alias Flags =
@@ -47,8 +49,8 @@ redirectTo route model =
     ( { model | page = Transitioning }, Route.redirectTo route )
 
 
-handleAppLocation : Model -> Navigation.Location -> ( Model, Cmd Msg )
-handleAppLocation model location =
+handleAppRoute : Model -> Route.ProtectedRoute -> ( Model, Cmd Msg )
+handleAppRoute model route =
     case model.token of
         Nothing ->
             model
@@ -57,16 +59,16 @@ handleAppLocation model location =
         Just token ->
             case model.page of
                 App subModel ->
-                    App.update (App.UrlChanged location) subModel
+                    App.update (App.UrlChanged route) subModel
                         |> wrapPage App AppMsg model
 
                 _ ->
-                    App.init model.baseUrl token location
+                    App.init model.baseUrl token route
                         |> wrapPage App AppMsg model
 
 
-handleAuthLocation : Model -> Navigation.Location -> ( Model, Cmd Msg )
-handleAuthLocation model location =
+handleAuthRoute : Model -> Route.AuthRoute -> ( Model, Cmd Msg )
+handleAuthRoute model route =
     case model.token of
         Just _ ->
             model
@@ -75,34 +77,40 @@ handleAuthLocation model location =
         Nothing ->
             case model.page of
                 Auth subModel ->
-                    Auth.update (Auth.UrlChanged location) subModel
+                    Auth.update (Auth.UrlChanged route) subModel
                         |> wrapPage Auth AuthMsg model
 
                 _ ->
-                    Auth.init model.baseUrl location
+                    Auth.init model.baseUrl route
                         |> wrapPage Auth AuthMsg model
+
+
+handlePublicRoute : Model -> Route.PublicRoute -> ( Model, Cmd Msg )
+handlePublicRoute model route =
+    case model.page of
+        Public subModel ->
+            Public.update (Public.UrlChanged route) subModel
+                |> wrapPage Public PublicMsg model
+
+        _ ->
+            Public.init model.baseUrl route
+                |> wrapPage Public PublicMsg model
 
 
 setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
 setPage model location =
-    case Route.readPublicRoute location of
+    case Route.routeFromLocation location of
+        Just (Route.Protected route) ->
+            handleAppRoute model route
+
+        Just (Route.Auth route) ->
+            handleAuthRoute model route
+
+        Just (Route.Public route) ->
+            handlePublicRoute model route
+
         Nothing ->
-            case Route.isProtectedRoute location of
-                False ->
-                    handleAuthLocation model location
-
-                True ->
-                    handleAppLocation model location
-
-        Just publicPage ->
-            case model.page of
-                Public subModel ->
-                    Public.update (Public.UrlChanged publicPage) subModel
-                        |> wrapPage Public PublicMsg model
-
-                _ ->
-                    Public.init model.baseUrl publicPage
-                        |> wrapPage Public PublicMsg model
+            ( { model | page = NotFound }, Cmd.none )
 
 
 init : Flags -> Navigation.Location -> ( Model, Cmd Msg )
@@ -162,6 +170,9 @@ view model =
         Transitioning ->
             Html.p [] [ Html.text "Redirecting..." ]
 
+        NotFound ->
+            NotFound.view
+
         App subModel ->
             App.view subModel
                 |> Html.map AppMsg
@@ -179,6 +190,9 @@ pageSubscriptions : Model -> Sub Msg
 pageSubscriptions model =
     case model.page of
         Transitioning ->
+            Sub.none
+
+        NotFound ->
             Sub.none
 
         App subModel ->
