@@ -1,4 +1,4 @@
-module Auth.Pages.DeploymentLogs exposing
+module Public.Pages.DeploymentLogs.Main exposing
     ( Model
     , Msg
     , init
@@ -7,10 +7,10 @@ module Auth.Pages.DeploymentLogs exposing
     , view
     )
 
-import App.Api.GetDeploymentLogs exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http exposing (Error)
+import Public.Pages.DeploymentLogs.Data exposing (..)
 import RemoteData exposing (RemoteData(..), WebData)
 import Time exposing (Time, second)
 import Util exposing (PageHandler, andPerform, noop, return)

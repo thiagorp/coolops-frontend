@@ -1,6 +1,7 @@
 module Route exposing
     ( AuthRoute(..)
     , ProtectedRoute(..)
+    , PublicRoute(..)
     , Route(..)
     , authRoot
     , isAuthRoute
@@ -9,6 +10,7 @@ module Route exposing
     , protectedRoot
     , readAuthRoute
     , readProtectedRoute
+    , readPublicRoute
     , redirectTo
     , toUrl
     )
@@ -31,11 +33,15 @@ type ProtectedRoute
 type AuthRoute
     = Signup
     | Login
-    | DeploymentLogs String
+
+
+type PublicRoute
+    = DeploymentLogs String
 
 
 type Route
     = Auth AuthRoute
+    | Public PublicRoute
     | Protected ProtectedRoute
 
 
@@ -71,6 +77,16 @@ isAuthRoute location =
             False
 
 
+isPublicRoute : Navigation.Location -> Bool
+isPublicRoute location =
+    case readPublicRoute location of
+        Just _ ->
+            True
+
+        Nothing ->
+            False
+
+
 isProtectedRoute : Navigation.Location -> Bool
 isProtectedRoute location =
     case readProtectedRoute location of
@@ -86,6 +102,11 @@ readAuthRoute =
     Url.parsePath authRouteParser
 
 
+readPublicRoute : Navigation.Location -> Maybe PublicRoute
+readPublicRoute =
+    Url.parsePath publicRouteParser
+
+
 readProtectedRoute : Navigation.Location -> Maybe ProtectedRoute
 readProtectedRoute =
     Url.parsePath procetedRouteParser
@@ -96,7 +117,13 @@ authRouteParser =
     Url.oneOf
         [ Url.map Signup (s "__signup__")
         , Url.map Login (s "login")
-        , Url.map DeploymentLogs (s "deployments" </> string </> s "logs")
+        ]
+
+
+publicRouteParser : Url.Parser (PublicRoute -> a) a
+publicRouteParser =
+    Url.oneOf
+        [ Url.map DeploymentLogs (s "deployments" </> string </> s "logs")
         ]
 
 
@@ -116,6 +143,15 @@ procetedRouteParser =
 toUrl : Route -> String
 toUrl route =
     case route of
+        Auth Signup ->
+            "/__signup__"
+
+        Auth Login ->
+            "/login"
+
+        Public (DeploymentLogs deploymentId) ->
+            "/deployments/" ++ deploymentId ++ "/logs"
+
         Protected Home ->
             "/"
 
@@ -139,12 +175,3 @@ toUrl route =
 
         Protected (CopyEnvironment environmentId) ->
             "/environments/" ++ environmentId ++ "/copy"
-
-        Auth Signup ->
-            "/__signup__"
-
-        Auth Login ->
-            "/login"
-
-        Auth (DeploymentLogs deploymentId) ->
-            "/deployments/" ++ deploymentId ++ "/logs"

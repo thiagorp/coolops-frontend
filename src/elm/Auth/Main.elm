@@ -7,7 +7,6 @@ module Auth.Main exposing
     , view
     )
 
-import Auth.Pages.DeploymentLogs as DeploymentLogs
 import Auth.Pages.Login as Login
 import Auth.Pages.NotFound as NotFound
 import Auth.Pages.Signup as Signup
@@ -20,14 +19,12 @@ type Msg
     = UrlChanged Navigation.Location
     | SignupMsg Signup.Msg
     | LoginMsg Login.Msg
-    | DeploymentLogsMsg DeploymentLogs.Msg
 
 
 type Page
     = NotFound
     | Signup Signup.Model
     | Login Login.Model
-    | DeploymentLogs DeploymentLogs.Model
 
 
 type alias Model =
@@ -63,9 +60,6 @@ setPage model location =
         Just Route.Login ->
             wrapPage Login LoginMsg model (Login.init model.baseUrl)
 
-        Just (Route.DeploymentLogs deploymentId) ->
-            wrapPage DeploymentLogs DeploymentLogsMsg model (DeploymentLogs.init model.baseUrl deploymentId)
-
         Nothing ->
             ( { model | page = NotFound }, Cmd.none )
 
@@ -99,15 +93,6 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        DeploymentLogsMsg subMsg ->
-            case model.page of
-                DeploymentLogs subModel ->
-                    DeploymentLogs.update subMsg subModel
-                        |> wrapPage DeploymentLogs DeploymentLogsMsg model
-
-                _ ->
-                    ( model, Cmd.none )
-
 
 view : Model -> Html.Html Msg
 view model =
@@ -119,10 +104,6 @@ view model =
         Login subModel ->
             Login.view subModel
                 |> Html.map LoginMsg
-
-        DeploymentLogs subModel ->
-            DeploymentLogs.view subModel
-                |> Html.map DeploymentLogsMsg
 
         NotFound ->
             NotFound.view
@@ -139,7 +120,3 @@ subscriptions model =
 
         Signup _ ->
             Sub.none
-
-        DeploymentLogs subModel ->
-            DeploymentLogs.subscriptions subModel
-                |> Sub.map DeploymentLogsMsg
