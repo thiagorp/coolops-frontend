@@ -4,14 +4,10 @@ module Route exposing
     , PublicRoute(..)
     , Route(..)
     , authRoot
-    , isAuthRoute
-    , isProtectedRoute
     , modifyTo
     , protectedRoot
-    , readAuthRoute
-    , readProtectedRoute
-    , readPublicRoute
     , redirectTo
+    , routeFromLocation
     , toUrl
     )
 
@@ -67,49 +63,16 @@ modifyTo route =
         |> Navigation.modifyUrl
 
 
-isAuthRoute : Navigation.Location -> Bool
-isAuthRoute location =
-    case readAuthRoute location of
-        Just _ ->
-            True
-
-        Nothing ->
-            False
-
-
-isPublicRoute : Navigation.Location -> Bool
-isPublicRoute location =
-    case readPublicRoute location of
-        Just _ ->
-            True
-
-        Nothing ->
-            False
-
-
-isProtectedRoute : Navigation.Location -> Bool
-isProtectedRoute location =
-    case readProtectedRoute location of
-        Just _ ->
-            True
-
-        Nothing ->
-            False
-
-
-readAuthRoute : Navigation.Location -> Maybe AuthRoute
-readAuthRoute =
-    Url.parsePath authRouteParser
-
-
-readPublicRoute : Navigation.Location -> Maybe PublicRoute
-readPublicRoute =
-    Url.parsePath publicRouteParser
-
-
-readProtectedRoute : Navigation.Location -> Maybe ProtectedRoute
-readProtectedRoute =
-    Url.parsePath procetedRouteParser
+routeFromLocation : Navigation.Location -> Maybe Route
+routeFromLocation location =
+    Url.parsePath
+        (Url.oneOf
+            [ Url.map Auth authRouteParser
+            , Url.map Protected protectedRouteParser
+            , Url.map Public publicRouteParser
+            ]
+        )
+        location
 
 
 authRouteParser : Url.Parser (AuthRoute -> a) a
@@ -127,8 +90,8 @@ publicRouteParser =
         ]
 
 
-procetedRouteParser : Url.Parser (ProtectedRoute -> a) a
-procetedRouteParser =
+protectedRouteParser : Url.Parser (ProtectedRoute -> a) a
+protectedRouteParser =
     Url.oneOf
         [ Url.map Home top
         , Url.map NewProject (s "projects" </> s "new")

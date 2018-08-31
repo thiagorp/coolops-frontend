@@ -17,13 +17,12 @@ import App.Pages.Projects.List.Main as ProjectsList
 import App.Pages.Projects.New.Main as NewProject
 import App.Pages.SyncingProject as SyncingProject
 import Html
-import Navigation
 import Route
 import Util
 
 
 type Msg
-    = UrlChanged Navigation.Location
+    = UrlChanged Route.ProtectedRoute
     | ProjectsListMsg ProjectsList.Msg
     | NewProjectMsg NewProject.Msg
     | EditProjectMsg EditProject.Msg
@@ -91,46 +90,43 @@ wrapPage toContent toMsg model ( subModel, subCmds ) =
     withTopbar model content cmd
 
 
-setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
-setPage model location =
-    case Route.readProtectedRoute location of
-        Nothing ->
-            ( { model | page = NotFound }, Cmd.none )
-
-        Just Route.Home ->
+setPage : Model -> Route.ProtectedRoute -> ( Model, Cmd Msg )
+setPage model page =
+    case page of
+        Route.Home ->
             ProjectsList.init model.baseUrl model.apiToken
                 |> wrapPage ProjectsList ProjectsListMsg model
 
-        Just Route.ProjectsList ->
+        Route.ProjectsList ->
             ProjectsList.init model.baseUrl model.apiToken
                 |> wrapPage ProjectsList ProjectsListMsg model
 
-        Just Route.NewProject ->
+        Route.NewProject ->
             NewProject.init model.baseUrl model.apiToken
                 |> wrapPage NewProject NewProjectMsg model
 
-        Just (Route.EditProject projectId) ->
+        Route.EditProject projectId ->
             EditProject.init model.baseUrl model.apiToken projectId
                 |> wrapPage EditProject EditProjectMsg model
 
-        Just (Route.NewEnvironment projectId) ->
+        Route.NewEnvironment projectId ->
             NewEnvironment.init model.baseUrl model.apiToken projectId
                 |> wrapPage NewEnvironment NewEnvironmentMsg model
 
-        Just (Route.EditEnvironment environmentId) ->
+        Route.EditEnvironment environmentId ->
             EditEnvironment.init model.baseUrl model.apiToken environmentId
                 |> wrapPage EditEnvironment EditEnvironmentMsg model
 
-        Just (Route.CopyEnvironment environmentId) ->
+        Route.CopyEnvironment environmentId ->
             CopyEnvironment.init model.baseUrl model.apiToken environmentId
                 |> wrapPage CopyEnvironment CopyEnvironmentMsg model
 
-        Just (Route.SyncingProject code state) ->
+        Route.SyncingProject code state ->
             SyncingProject.init model.baseUrl model.apiToken code state
                 |> wrapPage SyncingProject SyncingProjectMsg model
 
 
-init : String -> String -> Navigation.Location -> ( Model, Cmd Msg )
+init : String -> String -> Route.ProtectedRoute -> ( Model, Cmd Msg )
 init baseUrl apiToken =
     setPage (Model NotFound apiToken baseUrl)
 

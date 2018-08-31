@@ -11,12 +11,11 @@ import Auth.Pages.Login as Login
 import Auth.Pages.NotFound as NotFound
 import Auth.Pages.Signup as Signup
 import Html
-import Navigation
 import Route
 
 
 type Msg
-    = UrlChanged Navigation.Location
+    = UrlChanged Route.AuthRoute
     | SignupMsg Signup.Msg
     | LoginMsg Login.Msg
 
@@ -51,20 +50,17 @@ wrapPage toPage toMsg model ( subModel, subCmds ) =
     ( { model | page = page }, cmd )
 
 
-setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
-setPage model location =
-    case Route.readAuthRoute location of
-        Just Route.Signup ->
+setPage : Model -> Route.AuthRoute -> ( Model, Cmd Msg )
+setPage model page =
+    case page of
+        Route.Signup ->
             wrapPage Signup SignupMsg model (Signup.init model.baseUrl)
 
-        Just Route.Login ->
+        Route.Login ->
             wrapPage Login LoginMsg model (Login.init model.baseUrl)
 
-        Nothing ->
-            ( { model | page = NotFound }, Cmd.none )
 
-
-init : String -> Navigation.Location -> ( Model, Cmd Msg )
+init : String -> Route.AuthRoute -> ( Model, Cmd Msg )
 init baseUrl =
     setPage (Model NotFound baseUrl)
 
