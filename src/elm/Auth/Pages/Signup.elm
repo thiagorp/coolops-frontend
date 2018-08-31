@@ -1,16 +1,23 @@
-module Public.Pages.Signup exposing (..)
+module Auth.Pages.Signup exposing
+    ( Model
+    , Msg
+    , init
+    , update
+    , view
+    )
 
+import Auth.Api as Api
+import Auth.AppHtml exposing (a)
+import Auth.Layouts.Authentication as AuthenticationLayout
 import Form.Html exposing (InputAttribute(..), InputType(..))
 import Form.Validation as Validation
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class, href)
 import Http as Http
 import Ports
-import Public.Api as Api
-import Public.AppHtml exposing (a)
-import Public.Layouts.Authentication as AuthenticationLayout
-import Route as Route exposing (OpenRoute(Login), Route(Open), toUrl)
+import Route as Route exposing (AuthRoute(Login), Route(Auth), toUrl)
 import Util exposing (PageHandler, andPerform, noop, return)
+
 
 
 ---- MODEL ----
@@ -199,6 +206,6 @@ view model =
         [ AuthenticationLayout.form submitting Signup "Create new account" serverError inputs
         , div [ class "text-center text-muted" ]
             [ text "Already have an account? "
-            , a (Open Login) LinkClicked [] [ text "Sign in" ]
+            , a (Auth Login) LinkClicked [] [ text "Sign in" ]
             ]
         ]

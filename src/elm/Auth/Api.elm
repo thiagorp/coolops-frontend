@@ -1,14 +1,14 @@
-module Public.Api
-    exposing
-        ( SignupRequest
-        , SignupResponse
-        , login
-        , signup
-        )
+module Auth.Api exposing
+    ( SignupRequest
+    , SignupResponse
+    , login
+    , signup
+    )
 
 import Http as Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+
 
 
 -- Signup

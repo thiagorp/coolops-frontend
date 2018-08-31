@@ -1,15 +1,19 @@
-module Public.Pages.Login exposing (Field(..), Model, Msg(..), formConfig, init, login, update, updateField, view)
+module Auth.Pages.Login exposing
+    ( Model
+    , Msg
+    , init
+    , update
+    , view
+    )
 
+import Auth.Api as Api
+import Auth.Layouts.Authentication as AuthenticationLayout
 import Form.Html exposing (..)
 import Form.Validation as Validation
 import Html exposing (Html, div, text)
-import Html.Attributes exposing (class, href)
 import Http as Http
 import Ports
-import Public.Api as Api
-import Public.AppHtml exposing (a)
-import Public.Layouts.Authentication as AuthenticationLayout
-import Route exposing (OpenRoute(Signup), Route(Open), toUrl)
+import Route exposing (AuthRoute(Signup), Route(Auth), toUrl)
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
@@ -150,6 +154,6 @@ view model =
 
         -- , div [ class "text-center text-muted" ]
         -- [ text "Don't have account yet? "
-        -- , a (Open Signup) LinkClicked [] [ text "Sign up" ]
+        -- , a (Auth Signup) LinkClicked [] [ text "Sign up" ]
         -- ]
         ]

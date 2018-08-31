@@ -1,4 +1,4 @@
-module Public.Main exposing
+module Auth.Main exposing
     ( Model
     , Msg(..)
     , init
@@ -7,12 +7,12 @@ module Public.Main exposing
     , view
     )
 
+import Auth.Pages.DeploymentLogs as DeploymentLogs
+import Auth.Pages.Login as Login
+import Auth.Pages.NotFound as NotFound
+import Auth.Pages.Signup as Signup
 import Html
 import Navigation
-import Public.Pages.DeploymentLogs as DeploymentLogs
-import Public.Pages.Login as Login
-import Public.Pages.NotFound as NotFound
-import Public.Pages.Signup as Signup
 import Route
 
 
@@ -56,7 +56,7 @@ wrapPage toPage toMsg model ( subModel, subCmds ) =
 
 setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
 setPage model location =
-    case Route.readOpenRoute location of
+    case Route.readAuthRoute location of
         Just Route.Signup ->
             wrapPage Signup SignupMsg model (Signup.init model.baseUrl)
 
