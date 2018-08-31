@@ -1,4 +1,4 @@
-module Public.Layouts.Authentication exposing (..)
+module Auth.Layouts.Authentication exposing (form, layout)
 
 import Form.Html exposing (Input, input, submitButton)
 import Html exposing (Html, div, p, text)

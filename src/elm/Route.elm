@@ -1,13 +1,13 @@
 module Route exposing
-    ( OpenRoute(..)
+    ( AuthRoute(..)
     , ProtectedRoute(..)
     , Route(..)
-    , isOpenRoute
+    , authRoot
+    , isAuthRoute
     , isProtectedRoute
     , modifyTo
-    , openRoot
     , protectedRoot
-    , readOpenRoute
+    , readAuthRoute
     , readProtectedRoute
     , redirectTo
     , toUrl
@@ -28,20 +28,20 @@ type ProtectedRoute
     | EditEnvironment String
 
 
-type OpenRoute
+type AuthRoute
     = Signup
     | Login
     | DeploymentLogs String
 
 
 type Route
-    = Open OpenRoute
+    = Auth AuthRoute
     | Protected ProtectedRoute
 
 
-openRoot : Route
-openRoot =
-    Open Login
+authRoot : Route
+authRoot =
+    Auth Login
 
 
 protectedRoot : Route
@@ -61,9 +61,9 @@ modifyTo route =
         |> Navigation.modifyUrl
 
 
-isOpenRoute : Navigation.Location -> Bool
-isOpenRoute location =
-    case readOpenRoute location of
+isAuthRoute : Navigation.Location -> Bool
+isAuthRoute location =
+    case readAuthRoute location of
         Just _ ->
             True
 
@@ -81,9 +81,9 @@ isProtectedRoute location =
             False
 
 
-readOpenRoute : Navigation.Location -> Maybe OpenRoute
-readOpenRoute =
-    Url.parsePath openRouteParser
+readAuthRoute : Navigation.Location -> Maybe AuthRoute
+readAuthRoute =
+    Url.parsePath authRouteParser
 
 
 readProtectedRoute : Navigation.Location -> Maybe ProtectedRoute
@@ -91,8 +91,8 @@ readProtectedRoute =
     Url.parsePath procetedRouteParser
 
 
-openRouteParser : Url.Parser (OpenRoute -> a) a
-openRouteParser =
+authRouteParser : Url.Parser (AuthRoute -> a) a
+authRouteParser =
     Url.oneOf
         [ Url.map Signup (s "__signup__")
         , Url.map Login (s "login")
@@ -140,11 +140,11 @@ toUrl route =
         Protected (CopyEnvironment environmentId) ->
             "/environments/" ++ environmentId ++ "/copy"
 
-        Open Signup ->
+        Auth Signup ->
             "/__signup__"
 
-        Open Login ->
+        Auth Login ->
             "/login"
 
-        Open (DeploymentLogs deploymentId) ->
+        Auth (DeploymentLogs deploymentId) ->
             "/deployments/" ++ deploymentId ++ "/logs"

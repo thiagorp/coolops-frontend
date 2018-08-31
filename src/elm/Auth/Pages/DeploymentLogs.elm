@@ -1,4 +1,11 @@
-module Public.Pages.DeploymentLogs exposing (..)
+module Auth.Pages.DeploymentLogs exposing
+    ( Model
+    , Msg
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import App.Api.GetDeploymentLogs exposing (..)
 import Html exposing (..)

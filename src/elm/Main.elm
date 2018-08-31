@@ -1,10 +1,10 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import App.Main as App
+import Auth.Main as Auth
 import Html
 import Navigation
 import Ports exposing (onSessionChange)
-import Public.Main as Public
 import Route
 
 
@@ -12,13 +12,13 @@ type Msg
     = UrlChanged Navigation.Location
     | SessionChanged (Maybe String)
     | AppMsg App.Msg
-    | PublicMsg Public.Msg
+    | AuthMsg Auth.Msg
 
 
 type Page
     = Transitioning
     | App App.Model
-    | Public Public.Model
+    | Auth Auth.Model
 
 
 type alias Flags =
@@ -57,12 +57,12 @@ redirectTo route model =
 setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
 setPage model location =
     let
-        handleOpenRoute =
+        handleAuthRoute =
             Route.isProtectedRoute location
-                |> handleRoute model Route.openRoot
+                |> handleRoute model Route.authRoot
 
         handleProtectedRoute =
-            Route.isOpenRoute location
+            Route.isAuthRoute location
                 |> handleRoute model Route.protectedRoot
     in
     case ( model.page, model.token ) of
@@ -72,9 +72,9 @@ setPage model location =
                 |> handleProtectedRoute
 
         ( Transitioning, Nothing ) ->
-            Public.init model.baseUrl location
-                |> wrapPage Public PublicMsg model
-                |> handleOpenRoute
+            Auth.init model.baseUrl location
+                |> wrapPage Auth AuthMsg model
+                |> handleAuthRoute
 
         ( App subModel, Just _ ) ->
             App.update (App.UrlChanged location) subModel
@@ -83,14 +83,14 @@ setPage model location =
 
         ( App _, Nothing ) ->
             model
-                |> redirectTo Route.openRoot
+                |> redirectTo Route.authRoot
 
-        ( Public subModel, Nothing ) ->
-            Public.update (Public.UrlChanged location) subModel
-                |> wrapPage Public PublicMsg model
-                |> handleOpenRoute
+        ( Auth subModel, Nothing ) ->
+            Auth.update (Auth.UrlChanged location) subModel
+                |> wrapPage Auth AuthMsg model
+                |> handleAuthRoute
 
-        ( Public _, Just _ ) ->
+        ( Auth _, Just _ ) ->
             model
                 |> redirectTo Route.protectedRoot
 
@@ -111,16 +111,16 @@ update msg model =
                             Route.protectedRoot
 
                         Nothing ->
-                            Route.openRoot
+                            Route.authRoot
             in
             ( { model | token = newToken }, Route.redirectTo page )
 
         ( UrlChanged location, _ ) ->
             setPage model location
 
-        ( PublicMsg subMsg, Public subModel ) ->
-            Public.update subMsg subModel
-                |> wrapPage Public PublicMsg model
+        ( AuthMsg subMsg, Auth subModel ) ->
+            Auth.update subMsg subModel
+                |> wrapPage Auth AuthMsg model
 
         ( AppMsg subMsg, App subModel ) ->
             App.update subMsg subModel
@@ -140,9 +140,9 @@ view model =
             App.view subModel
                 |> Html.map AppMsg
 
-        Public subModel ->
-            Public.view subModel
-                |> Html.map PublicMsg
+        Auth subModel ->
+            Auth.view subModel
+                |> Html.map AuthMsg
 
 
 pageSubscriptions : Model -> Sub Msg
@@ -155,9 +155,9 @@ pageSubscriptions model =
             App.subscriptions subModel
                 |> Sub.map AppMsg
 
-        Public subModel ->
-            Public.subscriptions subModel
-                |> Sub.map PublicMsg
+        Auth subModel ->
+            Auth.subscriptions subModel
+                |> Sub.map AuthMsg
 
 
 subscriptions : Model -> Sub Msg
