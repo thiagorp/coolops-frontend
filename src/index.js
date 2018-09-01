@@ -1,4 +1,3 @@
-import '../public/assets/css/dashboard.css';
 import '../public/assets/css/tabler.css';
 import '../public/assets/css/spinner.css';
 import { Main } from './elm/Main.elm';
