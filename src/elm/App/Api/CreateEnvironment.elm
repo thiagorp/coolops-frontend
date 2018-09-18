@@ -1,4 +1,4 @@
-module App.Api.CreateEnvironment exposing (..)
+module App.Api.CreateEnvironment exposing (Params, createEnvironment, encode, encodeEnvVars)
 
 import App.Api.Common exposing (..)
 import Dict exposing (Dict)
@@ -7,7 +7,7 @@ import Json.Encode as Encode
 
 
 type alias Params a =
-    { a | name : String, projectId : String, environmentVars : Dict String String }
+    { a | name : String, projectId : String, slug : String, environmentVars : Dict String String }
 
 
 encodeEnvVars : Dict String String -> Encode.Value
@@ -22,6 +22,7 @@ encode params =
     Encode.object
         [ ( "name", Encode.string params.name )
         , ( "env_vars", encodeEnvVars params.environmentVars )
+        , ( "slug", Encode.string params.slug )
         ]
 
 

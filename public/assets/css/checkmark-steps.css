@@ -1,0 +1,23 @@
+.checkmark-steps-row {
+  margin-bottom: 23px;
+  line-height: 1;
+}
+
+.checkmark-steps-row i {
+  position: relative;
+  margin-right: 25px;
+}
+
+.checkmark-steps-row i:after {
+  content: "";
+  width: 1px;
+  height: 15px;
+  background-color: rgba(0, 40, 100, 0.12);
+  position: absolute;
+  left: calc(50% - 1px);
+  top: calc(100% + 4px);
+}
+
+.checkmark-steps-row:last-child i:after {
+  display: none;
+}

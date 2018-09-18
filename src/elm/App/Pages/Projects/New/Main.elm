@@ -6,142 +6,231 @@ module App.Pages.Projects.New.Main exposing
     , view
     )
 
-import App.Api.CreateProject as Api
-import App.Html exposing (..)
-import App.Html.Form as Form
-import Form.Validation as Validation
-import Html exposing (Html)
-import Http
+import App.Html as AppHtml
+import App.Pages.Projects.New.CIIntegration.Main as CIIntegration
+import App.Pages.Projects.New.CreateEnvironments.Main as CreateEnvironments
+import App.Pages.Projects.New.CreateProject.Main as CreateProject
+import App.Pages.Projects.New.SlackIntegration.Callback as SlackIntegrationCallback
+import App.Pages.Projects.New.SlackIntegration.Main as SlackIntegration
+import Components.CheckmarkSteps as CheckmarkSteps
+import Html exposing (..)
+import Html.Attributes exposing (..)
 import Route
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
-type alias Model =
-    { name : String
-    , deploymentImage : String
-    , apiToken : String
-    , formState : Validation.FormState Field
-    , baseUrl : String
-    }
-
-
-init : String -> String -> PageHandler Model Msg
-init baseUrl apiToken =
-    return
-        { name = ""
-        , deploymentImage = ""
-        , apiToken = apiToken
-        , formState = Validation.initialState
-        , baseUrl = baseUrl
-        }
-
-
-type Field
-    = NameField
-    | DeploymentImageField
-
-
 type Msg
-    = FieldUpdated Field String
-    | Submit
-    | SubmitResponse (Result Http.Error ())
+    = CreateProjectMsg CreateProject.Msg
+    | SlackIntegrationMsg SlackIntegration.Msg
+    | SlackIntegrationCallbackMsg SlackIntegrationCallback.Msg
+    | CreateEnvironmentsMsg CreateEnvironments.Msg
+    | CIIntegrationMsg CIIntegration.Msg
 
 
-updateField : Model -> Field -> String -> Model
-updateField model field value =
-    case field of
-        NameField ->
-            { model | name = value }
-
-        DeploymentImageField ->
-            { model | deploymentImage = value }
+type Step
+    = CreateProject CreateProject.Model
+    | SlackIntegration SlackIntegration.Model
+    | SlackIntegrationCallback SlackIntegrationCallback.Model
+    | CreateEnvironments CreateEnvironments.Model
+    | CIIntegration CIIntegration.Model
 
 
-formConfig : Validation.FormConfig Model Field (PageHandler Model Msg)
-formConfig =
-    let
-        validator =
-            Validation.all
-                [ Validation.ifBlank .name NameField
-                , Validation.ifBlank .deploymentImage DeploymentImageField
-                ]
-    in
-    { validator = validator
-    , successCallback = submit
-    , errorCallback = noop
+type alias Model =
+    { apiToken : String
+    , baseUrl : String
+    , step : Step
     }
 
 
-submit : Model -> PageHandler Model Msg
-submit model =
-    return model
-        |> andPerform (Api.createProject model.baseUrl model.apiToken SubmitResponse model)
+stepFromRoute : String -> String -> Route.NewProjectStep -> PageHandler Step Msg
+stepFromRoute baseUrl apiToken route =
+    case route of
+        Route.CreateProject ->
+            CreateProject.init baseUrl apiToken
+                |> Util.map CreateProject CreateProjectMsg
+
+        Route.IntegrateWithSlack projectId error ->
+            SlackIntegration.init baseUrl apiToken projectId error
+                |> Util.map SlackIntegration SlackIntegrationMsg
+
+        Route.IntegrateWithSlackCallback projectId code ->
+            SlackIntegrationCallback.init baseUrl apiToken code projectId
+                |> Util.map SlackIntegrationCallback SlackIntegrationCallbackMsg
+
+        Route.CreateEnvironments projectId ->
+            CreateEnvironments.init baseUrl apiToken projectId
+                |> Util.map CreateEnvironments CreateEnvironmentsMsg
+
+        Route.IntegrateWithCI projectId ->
+            CIIntegration.init baseUrl apiToken projectId
+                |> Util.map CIIntegration CIIntegrationMsg
+
+
+init : String -> String -> Route.NewProjectStep -> PageHandler Model Msg
+init baseUrl apiToken route =
+    let
+        setModel step =
+            { apiToken = apiToken
+            , baseUrl = baseUrl
+            , step = step
+            }
+    in
+    stepFromRoute baseUrl apiToken route
+        |> Util.map setModel identity
+
+
+setStep : Model -> Step -> Model
+setStep model step =
+    { model | step = step }
 
 
 update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
-        FieldUpdated field value ->
-            updateField model field value
-                |> Validation.validate formConfig
-                |> return
+        CreateProjectMsg subMsg ->
+            case model.step of
+                CreateProject subModel ->
+                    CreateProject.update subMsg subModel
+                        |> Util.map (setStep model << CreateProject) CreateProjectMsg
 
-        Submit ->
-            Validation.submit formConfig model
+                _ ->
+                    return model
 
-        SubmitResponse (Err _) ->
-            Validation.serverError model
-                |> return
+        SlackIntegrationMsg subMsg ->
+            case model.step of
+                SlackIntegration subModel ->
+                    SlackIntegration.update subMsg subModel
+                        |> Util.map (setStep model << SlackIntegration) SlackIntegrationMsg
 
-        SubmitResponse (Ok response) ->
-            return model
-                |> andPerform (Route.redirectTo (Route.Protected Route.ProjectsList))
+                _ ->
+                    return model
+
+        SlackIntegrationCallbackMsg subMsg ->
+            case model.step of
+                SlackIntegrationCallback subModel ->
+                    SlackIntegrationCallback.update subMsg subModel
+                        |> Util.map (setStep model << SlackIntegrationCallback) SlackIntegrationCallbackMsg
+
+                _ ->
+                    return model
+
+        CreateEnvironmentsMsg subMsg ->
+            case model.step of
+                CreateEnvironments subModel ->
+                    CreateEnvironments.update subMsg subModel
+                        |> Util.map (setStep model << CreateEnvironments) CreateEnvironmentsMsg
+
+                _ ->
+                    return model
+
+        CIIntegrationMsg subMsg ->
+            case model.step of
+                CIIntegration subModel ->
+                    CIIntegration.update subMsg subModel
+                        |> Util.map (setStep model << CIIntegration) CIIntegrationMsg
+
+                _ ->
+                    return model
 
 
 form : Model -> Html Msg
-form { formState } =
-    let
-        onInput =
-            Form.OnInput << FieldUpdated
+form model =
+    case model.step of
+        CreateProject subModel ->
+            CreateProject.view subModel
+                |> Html.map CreateProjectMsg
 
-        errorsOf =
-            Validation.errorsOf formState
+        SlackIntegration subModel ->
+            SlackIntegration.view subModel
+                |> Html.map SlackIntegrationMsg
 
-        submitting =
-            Validation.isSubmitting formState
+        SlackIntegrationCallback subModel ->
+            SlackIntegrationCallback.view subModel
+                |> Html.map SlackIntegrationCallbackMsg
 
-        inputs =
-            [ Form.TextInput
-                { label = "Name"
-                , placeholder = "Enter your project's name"
-                , errors = errorsOf NameField
-                , disabled = submitting
-                , attributes = [ onInput NameField ]
-                , id = "new-project-form-name-input"
-                }
-            , Form.TextInput
-                { label = "Deployment image"
-                , placeholder = "Enter the docker image of your deployment"
-                , errors = errorsOf DeploymentImageField
-                , disabled = submitting
-                , attributes = [ onInput DeploymentImageField ]
-                , id = "new-project-form-deployment-image-input"
-                }
-            ]
+        CreateEnvironments subModel ->
+            CreateEnvironments.view subModel
+                |> Html.map CreateEnvironmentsMsg
 
-        formConfig =
-            { loading = submitting
-            , error = Validation.getServerError formState
-            , submitButtonText = "Create"
-            , msg = Submit
-            }
-    in
-    Form.linearCardForm formConfig inputs
+        CIIntegration subModel ->
+            CIIntegration.view subModel
+                |> Html.map CIIntegrationMsg
+
+
+stepTitle : Step -> String
+stepTitle step =
+    case step of
+        CreateProject _ ->
+            "Create project"
+
+        SlackIntegration _ ->
+            "Integrate with Slack"
+
+        SlackIntegrationCallback _ ->
+            "Integrating with Slack..."
+
+        CreateEnvironments _ ->
+            "Create environments"
+
+        CIIntegration _ ->
+            "Integrate with your CI"
+
+
+steps : Model -> CheckmarkSteps.Steps
+steps model =
+    case model.step of
+        CreateProject _ ->
+            CheckmarkSteps.Steps
+                []
+                { text = "Create project" }
+                [ { text = "Integrate with Slack" }
+                , { text = "Create environments" }
+                , { text = "Integrate with your CI" }
+                ]
+
+        SlackIntegration _ ->
+            CheckmarkSteps.Steps
+                [ { text = "Create project" } ]
+                { text = "Integrate with Slack" }
+                [ { text = "Create environments" }
+                , { text = "Integrate with your CI" }
+                ]
+
+        SlackIntegrationCallback _ ->
+            CheckmarkSteps.Steps
+                [ { text = "Create project" } ]
+                { text = "Integrate with Slack" }
+                [ { text = "Create environments" }
+                , { text = "Integrate with your CI" }
+                ]
+
+        CreateEnvironments _ ->
+            CheckmarkSteps.Steps
+                [ { text = "Create project" }
+                , { text = "Integrate with Slack" }
+                ]
+                { text = "Create environments" }
+                [ { text = "Integrate with your CI" } ]
+
+        CIIntegration _ ->
+            CheckmarkSteps.Steps
+                [ { text = "Create project" }
+                , { text = "Integrate with Slack" }
+                , { text = "Create environments" }
+                ]
+                { text = "Integrate with your CI" }
+                []
 
 
 view : Model -> Html Msg
 view model =
-    container
-        [ pageHeader "Create new project"
-        , form model
+    AppHtml.container
+        [ AppHtml.pageHeader (stepTitle model.step)
+        , div [ class "row" ]
+            [ div [ class "col col-md-8" ]
+                [ form model ]
+            , div [ class "col col-md-4 pt-6" ]
+                [ CheckmarkSteps.view (steps model)
+                ]
+            ]
         ]

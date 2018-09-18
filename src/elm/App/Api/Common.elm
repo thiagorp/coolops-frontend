@@ -1,4 +1,12 @@
-module App.Api.Common exposing (..)
+module App.Api.Common exposing
+    ( Token
+    , delete
+    , get
+    , patch
+    , post
+    , post_
+    , publicGet
+    )
 
 import Http
 
@@ -46,6 +54,19 @@ delete baseUrl token path =
         , url = baseUrl ++ path
         , body = Http.emptyBody
         , expect = Http.expectStringResponse (\_ -> Ok ())
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+post_ : String -> Token -> String -> Http.Body -> Http.Expect a -> Http.Request a
+post_ baseUrl token path body expect =
+    Http.request
+        { method = "POST"
+        , headers = [ authHeader token ]
+        , url = baseUrl ++ path
+        , body = body
+        , expect = expect
         , timeout = Nothing
         , withCredentials = False
         }

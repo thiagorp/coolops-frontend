@@ -1,19 +1,20 @@
-module App.Pages.Environments.New.Main exposing
-    ( Field(..)
-    , Model
+module App.Pages.Projects.New.CreateEnvironments.Form exposing
+    ( Model
     , Msg(..)
     , init
-    , submit
     , update
     , view
     )
 
 import App.Api.CreateEnvironment as Api
+import App.Html as AppHtml
 import App.Html.Form as Form
+import App.Pages.Projects.New.CreateEnvironments.Data as Data
 import Dict exposing (Dict)
 import Form.Validation as Validation
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Http
 import Route
 import Util exposing (PageHandler, andPerform, noop, return)
@@ -32,17 +33,22 @@ type alias Model =
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
+    , projects : List Data.ProjectForEnvironmentVars
+    , selectedEnvToCopy : Maybe Data.EnvironmentForEnvironmentVars
     }
 
 
 type Msg
-    = NameUpdated String
-    | SlugUpdated String
+    = CopyEnvVars
+    | EnvToCopyFromSelected String
     | EnvVarValueUpdated String
     | EnvVarKeyUpdated String
     | EnvVarAdded
     | EnvVarRemoved String
     | EnvVarEditClicked String
+    | LinkClicked Route.Route
+    | NameUpdated String
+    | SlugUpdated String
     | Submit
     | SubmitResponse (Result Http.Error ())
 
@@ -52,9 +58,23 @@ type Field
     | SlugField
 
 
-init : String -> String -> String -> PageHandler Model Msg
-init baseUrl apiToken projectId =
-    return (Model "" "" False Dict.empty "" "" Nothing projectId apiToken Validation.initialState baseUrl)
+init : String -> String -> String -> List Data.ProjectForEnvironmentVars -> PageHandler Model Msg
+init baseUrl apiToken projectId projects =
+    return
+        { name = ""
+        , slug = ""
+        , slugModified = False
+        , environmentVars = Dict.empty
+        , editingKey = ""
+        , editingValue = ""
+        , editingKeyError = Nothing
+        , projectId = projectId
+        , apiToken = apiToken
+        , formState = Validation.initialState
+        , baseUrl = baseUrl
+        , projects = projects
+        , selectedEnvToCopy = Nothing
+        }
 
 
 formConfig : Validation.FormConfig Model Field (PageHandler Model Msg)
@@ -101,6 +121,29 @@ update msg model =
                 |> Validation.validate formConfig
                 |> return
 
+        CopyEnvVars ->
+            case model.selectedEnvToCopy of
+                Nothing ->
+                    return model
+
+                Just env ->
+                    return
+                        { model
+                            | selectedEnvToCopy = Nothing
+                            , environmentVars = Dict.union model.environmentVars env.environmentVars
+                        }
+
+        EnvToCopyFromSelected envId ->
+            let
+                selectedEnv =
+                    model.projects
+                        |> List.map .environments
+                        |> List.foldr (++) []
+                        |> List.filter (\e -> e.id == envId)
+                        |> List.head
+            in
+            return { model | selectedEnvToCopy = selectedEnv }
+
         EnvVarKeyUpdated newKey ->
             { model | editingKey = newKey, editingKeyError = Nothing }
                 |> return
@@ -141,8 +184,23 @@ update msg model =
             { model | environmentVars = Dict.remove key model.environmentVars }
                 |> return
 
+        LinkClicked route ->
+            return model
+                |> andPerform (Route.redirectTo route)
+
         Submit ->
             Validation.submit formConfig model
+
+        SubmitResponse (Err (Http.BadStatus response)) ->
+            case response.status.code of
+                409 ->
+                    model
+                        |> Validation.addError SlugField "This slug already exists on this project"
+                        |> return
+
+                _ ->
+                    Validation.serverError model
+                        |> return
 
         SubmitResponse (Err _) ->
             Validation.serverError model
@@ -150,35 +208,77 @@ update msg model =
 
         SubmitResponse (Ok response) ->
             return model
-                |> andPerform (Route.redirectTo (Route.Protected Route.ProjectsList))
 
 
-form : Model -> Html Msg
-form model =
+projectOptgroup : Data.ProjectForEnvironmentVars -> Html Msg
+projectOptgroup { name, environments } =
+    optgroup [ attribute "label" name ]
+        (List.map (\e -> option [ value e.id ] [ text e.name ]) environments)
+
+
+copyEnvironment : Bool -> Model -> Html Msg
+copyEnvironment submitting { projects, selectedEnvToCopy } =
+    let
+        noEnvSelected =
+            case selectedEnvToCopy of
+                Nothing ->
+                    True
+
+                Just _ ->
+                    False
+    in
+    case List.foldr ((+) << List.length << .environments) 0 projects of
+        0 ->
+            div [] []
+
+        _ ->
+            div [ class "form-group" ]
+                [ label [ class "form-label", for "new-environment-form-copy-environment-vars-input" ] [ text "Copy environment variables from another Environment" ]
+                , div [ class "row gutter-xs" ]
+                    [ div [ class "col" ]
+                        [ select [ id "new-environment-form-copy-environment-vars-input", class "form-control", onInput EnvToCopyFromSelected, disabled submitting ]
+                            ([ option [ selected noEnvSelected ] [ text "" ] ]
+                                ++ List.map projectOptgroup projects
+                            )
+                        ]
+                    , div [ class "col-auto" ]
+                        [ button [ type_ "button", class "btn btn-secondary", onClick CopyEnvVars, disabled (noEnvSelected || submitting) ] [ text "Copy" ]
+                        ]
+                    ]
+                , div [] [ small [ class "form-text text-muted" ] [ text "You will be able to edit them after you copy" ] ]
+                ]
+
+
+view : Model -> Html Msg
+view model =
     let
         submitting =
             Validation.isSubmitting model.formState
 
-        inputs =
-            [ Form.TextInput
+        nameInput =
+            Form.TextInput
                 { label = "Name"
-                , placeholder = "Enter your environment's name"
+                , placeholder = "E.g. Production, Staging"
                 , errors = Validation.errorsOf model.formState NameField
                 , disabled = submitting
                 , attributes = [ Form.OnInput NameUpdated ]
                 , id = "new-environment-form-name-input"
                 , hint = Nothing
                 }
-            , Form.TextInput
+
+        slugInput =
+            Form.TextInput
                 { label = "Slug"
                 , placeholder = "Enter your Environment's slug"
                 , errors = Validation.errorsOf model.formState SlugField
                 , disabled = submitting
                 , attributes = [ Form.InputValue model.slug, Form.OnInput SlugUpdated ]
                 , id = "new-environment-form-slug-input"
-                , hint = Just [ text "You will use this to refer to your environment on Slack" ]
+                , hint = Just [ text "It's unique inside the project. You will use it to refer to your environment on Slack" ]
                 }
-            , Form.KeyValueInput
+
+        envVarsInput =
+            Form.KeyValueInput
                 { label = "Environment variables"
                 , disabled = submitting
                 , placeholder = { key = "Key", val = "Value" }
@@ -196,22 +296,30 @@ form model =
                     , editing = { key = model.editingKey, val = model.editingValue }
                     }
                 }
-            ]
 
-        formConfig =
-            { loading = submitting
-            , error = Validation.getServerError model.formState
-            , submitButtonText = "Create"
-            , msg = Submit
-            }
+        error =
+            case Validation.getServerError model.formState of
+                Nothing ->
+                    []
+
+                Just error ->
+                    [ p [ class "text-red" ] [ text error ] ]
     in
-    Form.linearCardForm formConfig inputs
-
-
-view : Model -> Html Msg
-view model =
-    div [ class "container" ]
-        [ div [ class "page-header" ]
-            [ h1 [ class "page-title" ] [ text "Create environment" ] ]
-        , form model
+    Html.form [ class "card", onSubmit Submit ]
+        [ div [ class "card-body" ]
+            ([ Form.input nameInput
+             , Form.input slugInput
+             , copyEnvironment submitting model
+             , Form.input envVarsInput
+             ]
+                ++ error
+            )
+        , div [ class "card-footer text-right" ]
+            [ AppHtml.a
+                (Route.Protected (Route.NewProject (Route.IntegrateWithCI model.projectId)))
+                LinkClicked
+                [ class "btn btn-link mr-2" ]
+                [ text "Continue to the next step (unsaved data will be lost)" ]
+            , button [ class "btn btn-primary", type_ "submit", disabled submitting ] [ text "Save" ]
+            ]
         ]

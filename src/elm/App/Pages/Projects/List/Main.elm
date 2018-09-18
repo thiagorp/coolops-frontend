@@ -32,7 +32,6 @@ init baseUrl apiToken =
 
 type Msg
     = ProjectsResponse (ApiResult (List Project))
-    | CreateNewButtonClicked
     | LinkClicked Route
     | TimeLoaded Time
 
@@ -47,10 +46,6 @@ update msg model =
         ProjectsResponse result ->
             { model | projects = RemoteData.fromResult result }
                 |> return
-
-        CreateNewButtonClicked ->
-            return model
-                |> andPerform (redirectTo (Protected NewProject))
 
         TimeLoaded time ->
             { model | loadedTime = Just time }
@@ -217,7 +212,7 @@ view model =
         [ div [ class "page-header" ]
             [ h1 [ class "page-title" ] [ text "Projects" ]
             , div [ class "page-options d-flex" ]
-                [ AppHtml.a (Protected NewProject) LinkClicked [ class "btn btn-success" ] [ i [ class "fas fa-plus mr-2" ] [], text "Project" ] ]
+                [ AppHtml.a (Protected (NewProject CreateProject)) LinkClicked [ class "btn btn-success" ] [ i [ class "fas fa-plus mr-2" ] [], text "Project" ] ]
             ]
         , content model
         ]

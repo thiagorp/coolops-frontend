@@ -1,23 +1,24 @@
-module Form.Validation
-    exposing
-        ( FormConfig
-        , FormState
-        , Validator
-        , addError
-        , all
-        , errorsOf
-        , getServerError
-        , ifBlank
-        , ifInvalidEmail
-        , ifShorterThan
-        , initialState
-        , isSubmitting
-        , serverError
-        , submit
-        , uncategorizedError
-        , validate
-        )
+module Form.Validation exposing
+    ( FormConfig
+    , FormState
+    , Validator
+    , addError
+    , all
+    , errorsOf
+    , getServerError
+    , ifBlank
+    , ifInvalidEmail
+    , ifInvalidSlug
+    , ifShorterThan
+    , initialState
+    , isSubmitting
+    , serverError
+    , submit
+    , uncategorizedError
+    , validate
+    )
 
+import Util.Slug as Slug
 import Validate as ElmValidate
 
 
@@ -146,6 +147,11 @@ ifBlank getter fieldName =
 ifInvalidEmail : (model -> String) -> fieldName -> Validator fieldName model
 ifInvalidEmail getter fieldName =
     ElmValidate.ifInvalidEmail getter (\_ -> ( fieldName, "Is not a valid email" ))
+
+
+ifInvalidSlug : (model -> String) -> fieldName -> Validator fieldName model
+ifInvalidSlug getter fieldName =
+    ElmValidate.ifFalse (\model -> Slug.isValid (getter model)) ( fieldName, "Slugs can contain only alphanumeric characteres and -." )
 
 
 ifShorterThan : Int -> (model -> String) -> fieldName -> Validator fieldName model

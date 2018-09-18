@@ -101,8 +101,8 @@ setPage model page =
             ProjectsList.init model.baseUrl model.apiToken
                 |> wrapPage ProjectsList ProjectsListMsg model
 
-        Route.NewProject ->
-            NewProject.init model.baseUrl model.apiToken
+        Route.NewProject step ->
+            NewProject.init model.baseUrl model.apiToken step
                 |> wrapPage NewProject NewProjectMsg model
 
         Route.EditProject projectId ->

@@ -155,6 +155,7 @@ form model =
                 , disabled = submitting
                 , attributes = [ Form.OnInput NameUpdated, Form.InputValue model.name ]
                 , id = "new-environment-form-name-input"
+                , hint = Nothing
                 }
             , Form.KeyValueInput
                 { label = "Environment variables"

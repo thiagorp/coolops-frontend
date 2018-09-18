@@ -17,10 +17,13 @@ import Http
 import Route
 import SelectList
 import Util exposing (PageHandler, andPerform, noop, return)
+import Util.Slug as Slug
 
 
 type alias Model =
     { name : String
+    , slug : String
+    , slugModified : Bool
     , projectId : String
     , environmentVars : Dict String String
     , editingKey : String
@@ -35,6 +38,7 @@ type alias Model =
 
 type Msg
     = NameUpdated String
+    | SlugUpdated String
     | ProjectUpdated String
     | EnvVarValueUpdated String
     | EnvVarKeyUpdated String
@@ -48,12 +52,15 @@ type Msg
 type Field
     = NameField
     | ProjectField
+    | SlugField
 
 
 init : String -> String -> Data.Environment -> List Data.Project -> PageHandler Model Msg
 init baseUrl apiToken { environmentVars, projectId } projects =
     return
         { name = ""
+        , slug = ""
+        , slugModified = False
         , projectId = projectId
         , environmentVars = environmentVars
         , editingKey = ""
@@ -73,6 +80,8 @@ formConfig =
             Validation.all
                 [ Validation.ifBlank .name NameField
                 , Validation.ifBlank .projectId ProjectField
+                , Validation.ifBlank .slug SlugField
+                , Validation.ifInvalidSlug .slug SlugField
                 ]
     in
     { validator = validator
@@ -91,7 +100,21 @@ update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
         NameUpdated newName ->
-            { model | name = newName }
+            let
+                newSlug =
+                    case model.slugModified of
+                        True ->
+                            model.slug
+
+                        False ->
+                            Slug.slugify newName
+            in
+            { model | name = newName, slug = newSlug }
+                |> Validation.validate formConfig
+                |> return
+
+        SlugUpdated newSlug ->
+            { model | slug = newSlug, slugModified = True }
                 |> Validation.validate formConfig
                 |> return
 
@@ -181,6 +204,16 @@ form model =
                 , disabled = submitting
                 , attributes = [ Form.OnInput NameUpdated, Form.InputValue model.name ]
                 , id = "new-environment-form-name-input"
+                , hint = Nothing
+                }
+            , Form.TextInput
+                { label = "Slug"
+                , placeholder = "Enter your Environment's slug"
+                , errors = Validation.errorsOf model.formState SlugField
+                , disabled = submitting
+                , attributes = [ Form.InputValue model.slug, Form.OnInput SlugUpdated ]
+                , id = "new-environment-form-slug-input"
+                , hint = Just [ text "You will use this to refer to your environment on Slack" ]
                 }
             , Form.KeyValueInput
                 { label = "Environment variables"

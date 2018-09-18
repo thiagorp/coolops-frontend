@@ -136,6 +136,7 @@ formBody model submitting =
                 , disabled = submitting
                 , attributes = [ onInput NameField, Form.InputValue model.name ]
                 , id = "new-project-form-name-input"
+                , hint = Nothing
                 }
             , Form.TextInput
                 { label = "Deployment image"
@@ -144,6 +145,7 @@ formBody model submitting =
                 , disabled = submitting
                 , attributes = [ onInput DeploymentImageField, Form.InputValue model.deploymentImage ]
                 , id = "new-project-form-deployment-image-input"
+                , hint = Nothing
                 }
             ]
     in

@@ -9,17 +9,20 @@ module Public.Main exposing
 
 import Html
 import Public.Pages.DeploymentLogs.Main as DeploymentLogs
+import Public.Pages.SlackCallback as SlackCallback
 import Route
 
 
 type Msg
     = UrlChanged Route.PublicRoute
     | DeploymentLogsMsg DeploymentLogs.Msg
+    | SlackCallbackMsg SlackCallback.Msg
 
 
 type Page
     = Transitioning
     | DeploymentLogs DeploymentLogs.Model
+    | SlackCallback SlackCallback.Model
 
 
 type alias Model =
@@ -50,7 +53,12 @@ setPage : Model -> Route.PublicRoute -> ( Model, Cmd Msg )
 setPage model route =
     case route of
         Route.DeploymentLogs id ->
-            wrapPage DeploymentLogs DeploymentLogsMsg model (DeploymentLogs.init model.baseUrl id)
+            DeploymentLogs.init model.baseUrl id
+                |> wrapPage DeploymentLogs DeploymentLogsMsg model
+
+        Route.SlackCallback code state ->
+            SlackCallback.init code state
+                |> wrapPage SlackCallback SlackCallbackMsg model
 
 
 init : String -> Route.PublicRoute -> ( Model, Cmd Msg )
@@ -73,6 +81,15 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        SlackCallbackMsg subMsg ->
+            case model.page of
+                SlackCallback subModel ->
+                    SlackCallback.update subMsg subModel
+                        |> wrapPage SlackCallback SlackCallbackMsg model
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 view : Model -> Html.Html Msg
 view model =
@@ -84,6 +101,10 @@ view model =
             DeploymentLogs.view subModel
                 |> Html.map DeploymentLogsMsg
 
+        SlackCallback subModel ->
+            SlackCallback.view subModel
+                |> Html.map SlackCallbackMsg
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -91,6 +112,10 @@ subscriptions model =
         DeploymentLogs subModel ->
             DeploymentLogs.subscriptions subModel
                 |> Sub.map DeploymentLogsMsg
+
+        SlackCallback subModel ->
+            SlackCallback.subscriptions subModel
+                |> Sub.map SlackCallbackMsg
 
         Transitioning ->
             Sub.none

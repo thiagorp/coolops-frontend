@@ -1,10 +1,9 @@
-module App.Html.Form
-    exposing
-        ( Input(..)
-        , InputAttribute(..)
-        , input
-        , linearCardForm
-        )
+module App.Html.Form exposing
+    ( Input(..)
+    , InputAttribute(..)
+    , input
+    , linearCardForm
+    )
 
 import Dict exposing (Dict)
 import Html as Html
@@ -24,6 +23,7 @@ type alias TextInputConfig msg =
     , errors : Maybe (List String)
     , disabled : Bool
     , attributes : List (InputAttribute msg)
+    , hint : Maybe (List (Html.Html msg))
     , id : String
     }
 
@@ -121,7 +121,7 @@ addErrorClassToInput maybeErrors htmlAttributes =
 
 
 textInputHtml : String -> TextInputConfig msg -> Html.Html msg
-textInputHtml inputType { label, placeholder, errors, disabled, attributes, id } =
+textInputHtml inputType { label, placeholder, errors, disabled, attributes, id, hint } =
     let
         inputAttributes =
             [ Attr.class "form-control"
@@ -133,10 +133,27 @@ textInputHtml inputType { label, placeholder, errors, disabled, attributes, id }
                 |> addAttributesToInput attributes
                 |> addErrorClassToInput errors
 
+        addHint elems =
+            case hint of
+                Nothing ->
+                    elems
+
+                Just hintHtml ->
+                    case errors of
+                        Nothing ->
+                            elems ++ [ Html.small [ Attr.class "form-text text-muted" ] hintHtml ]
+
+                        Just [] ->
+                            elems ++ [ Html.small [ Attr.class "form-text text-muted" ] hintHtml ]
+
+                        Just _ ->
+                            elems
+
         elements =
             [ Html.label [ Attr.class "form-label", Attr.for id ] [ Html.text label ]
             , Html.input inputAttributes []
             ]
+                |> addHint
                 |> addErrorMessageToInput errors
     in
     Html.div [ Attr.class "form-group" ] elements
@@ -272,7 +289,7 @@ keyValueInputHtml config =
                 |> Html.div [ Attr.class "row" ]
     in
     Html.div []
-        [ Html.label [ Attr.class "form-label" ] [ Html.text config.label ]
+        [ Html.label [ Attr.class "form-label", Attr.for (config.id ++ "-key") ] [ Html.text config.label ]
         , inputs
         ]
 
