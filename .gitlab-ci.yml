@@ -5,7 +5,7 @@ variables:
 
 build_and_push:
   script:
-  - make build
+  - CI=false make build
   - make release
   - make push
 
