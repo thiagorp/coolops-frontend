@@ -1,4 +1,4 @@
-module App.Api.GetDeploymentLogs exposing (..)
+module App.Api.GetDeploymentLogs exposing (DeploymentLogs, decoder, getDeploymentLogs)
 
 import App.Api.Common exposing (..)
 import Http

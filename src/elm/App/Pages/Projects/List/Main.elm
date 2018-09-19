@@ -1,24 +1,28 @@
-module App.Pages.Projects.List.Main exposing (Model, Msg(..), content, deploymentCol, deploymentStatusCol, environmentRow, init, projectTable, projectTableBody, projectView, update, view)
+module App.Pages.Projects.List.Main exposing
+    ( Model
+    , Msg(..)
+    , init
+    , update
+    , view
+    )
 
 import Api exposing (ApiData, ApiResult)
 import Api.Enum.DeploymentStatus exposing (DeploymentStatus(..))
 import App.Html as AppHtml exposing (spinner)
 import App.Pages.Projects.List.Data exposing (..)
-import Date
-import Date.Distance as Distance
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import RemoteData exposing (RemoteData(..), WebData)
 import Route exposing (..)
 import Task exposing (..)
-import Time exposing (Time)
+import Time
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type alias Model =
     { projects : ApiData (List Project)
     , apiToken : String
-    , loadedTime : Maybe Time
+    , loadedTime : Maybe Time.Posix
     , baseUrl : String
     }
 
@@ -32,17 +36,12 @@ init baseUrl apiToken =
 
 type Msg
     = ProjectsResponse (ApiResult (List Project))
-    | LinkClicked Route
-    | TimeLoaded Time
+    | TimeLoaded Time.Posix
 
 
 update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
-        LinkClicked route ->
-            return model
-                |> andPerform (redirectTo route)
-
         ProjectsResponse result ->
             { model | projects = RemoteData.fromResult result }
                 |> return
@@ -52,7 +51,7 @@ update msg model =
                 |> return
 
 
-deploymentCol : Maybe Time -> Maybe Deployment -> List (Html msg)
+deploymentCol : Maybe Time.Posix -> Maybe Deployment -> List (Html msg)
 deploymentCol maybeCurrentTime maybeDeploment =
     let
         timeText deploymentTime =
@@ -66,10 +65,12 @@ deploymentCol maybeCurrentTime maybeDeploment =
                             text "Queued"
 
                         Just t ->
-                            Distance.inWords (Date.fromTime time) (Date.fromTime t)
-                                |> (++) "Deployed: "
-                                |> (\s -> s ++ " ago")
-                                |> text
+                            text "Deployed"
+
+        -- Distance.inWords (Date.fromTime time) (Date.fromTime t)
+        -- |> (++) "Deployed: "
+        -- |> (\s -> s ++ " ago")
+        -- |> text
     in
     case maybeDeploment of
         Nothing ->
@@ -111,7 +112,7 @@ deploymentStatusCol maybeDeploment =
             [ span [ class "status-icon", class (statusBg deployment) ] [] ]
 
 
-environmentRow : Maybe Time -> Environment -> Html Msg
+environmentRow : Maybe Time.Posix -> Environment -> Html Msg
 environmentRow maybeCurrentTime environment =
     tr []
         [ td [ width 1, class "pr-0" ] (deploymentStatusCol environment.currentDeployment)
@@ -123,21 +124,17 @@ environmentRow maybeCurrentTime environment =
             ]
         , td [] (deploymentCol maybeCurrentTime environment.currentDeployment)
         , td [ class "text-right" ]
-            [ AppHtml.a
-                (Protected (CopyEnvironment environment.id))
-                LinkClicked
-                [ class "icon mr-2" ]
+            [ a
+                [ class "icon mr-2", href (toUrl (Protected (CopyEnvironment environment.id))) ]
                 [ i [ class "fe fe-copy" ] [] ]
-            , AppHtml.a
-                (Protected (EditEnvironment environment.id))
-                LinkClicked
-                [ class "icon" ]
+            , a
+                [ class "icon", href (toUrl (Protected (EditEnvironment environment.id))) ]
                 [ i [ class "fe fe-edit" ] [] ]
             ]
         ]
 
 
-projectTableBody : Maybe Time -> Project -> List (Html Msg)
+projectTableBody : Maybe Time.Posix -> Project -> List (Html Msg)
 projectTableBody maybeCurrentTime project =
     case project.environments of
         [] ->
@@ -147,7 +144,7 @@ projectTableBody maybeCurrentTime project =
             List.map (environmentRow maybeCurrentTime) project.environments
 
 
-projectTable : Maybe Time -> Project -> Html Msg
+projectTable : Maybe Time.Posix -> Project -> Html Msg
 projectTable maybeCurrentTime project =
     div [ class "table-responsive" ]
         [ table [ class "table table-hover table-outline table-vcenter card-table" ]
@@ -164,7 +161,7 @@ projectTable maybeCurrentTime project =
         ]
 
 
-projectView : Maybe Time -> Project -> Html Msg
+projectView : Maybe Time.Posix -> Project -> Html Msg
 projectView maybeCurrentTime project =
     div [ class "row row-cards row-deck" ]
         [ div [ class "col-12" ]
@@ -172,14 +169,11 @@ projectView maybeCurrentTime project =
                 [ div [ class "card-header" ]
                     [ h3 [ class "card-title" ] [ text project.name ]
                     , div [ class "card-options" ]
-                        [ AppHtml.a
-                            (Protected (EditProject project.id))
-                            LinkClicked
-                            [ class "btn btn-sm btn-secondary" ]
+                        [ a
+                            [ class "btn btn-sm btn-secondary", href (toUrl (Protected (EditProject project.id))) ]
                             [ i [ class "fas fa-cog mr-2" ] [], text "Settings" ]
-                        , AppHtml.a (Protected (NewEnvironment project.id))
-                            LinkClicked
-                            [ class "btn btn-sm btn-success ml-2" ]
+                        , a
+                            [ class "btn btn-sm btn-success ml-2", href (toUrl (Protected (NewEnvironment project.id))) ]
                             [ i [ class "fas fa-plus mr-2" ] [], text "Environment" ]
                         ]
                     ]
@@ -190,8 +184,8 @@ projectView maybeCurrentTime project =
 
 
 content : Model -> Html Msg
-content { projects, loadedTime } =
-    case projects of
+content model =
+    case model.projects of
         NotAsked ->
             spinner
 
@@ -199,11 +193,11 @@ content { projects, loadedTime } =
             spinner
 
         Success projects ->
-            List.map (projectView loadedTime) projects
+            List.map (projectView model.loadedTime) projects
                 |> div []
 
         Failure e ->
-            text (toString e)
+            text "Something bad happened"
 
 
 view : Model -> Html Msg
@@ -212,7 +206,10 @@ view model =
         [ div [ class "page-header" ]
             [ h1 [ class "page-title" ] [ text "Projects" ]
             , div [ class "page-options d-flex" ]
-                [ AppHtml.a (Protected (NewProject CreateProject)) LinkClicked [ class "btn btn-success" ] [ i [ class "fas fa-plus mr-2" ] [], text "Project" ] ]
+                [ a
+                    [ class "btn btn-success", href (toUrl (Protected (NewProject CreateProject))) ]
+                    [ i [ class "fas fa-plus mr-2" ] [], text "Project" ]
+                ]
             ]
         , content model
         ]

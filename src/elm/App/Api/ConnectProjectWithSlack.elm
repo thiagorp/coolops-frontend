@@ -1,4 +1,4 @@
-module App.Api.ConnectProjectWithSlack exposing (..)
+module App.Api.ConnectProjectWithSlack exposing (Params, connectProjectWithSlack, encode)
 
 import App.Api.Common exposing (..)
 import Http

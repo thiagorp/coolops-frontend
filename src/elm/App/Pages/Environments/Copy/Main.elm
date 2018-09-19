@@ -12,6 +12,7 @@ import App.Pages.Environments.Copy.Form as Form
 import App.Pages.NotFound as NotFound
 import App.Pages.ServerError as ServerError
 import Html exposing (..)
+import Route
 import Util as PageUtil exposing (PageHandler, andPerform, noop, return)
 
 
@@ -27,6 +28,7 @@ type alias Model =
     , baseUrl : String
     , apiToken : String
     , id : String
+    , navigationKey : Route.NavigationKey
     }
 
 
@@ -35,13 +37,14 @@ type Msg
     | DataLoaded (Api.ApiResult Data.Response)
 
 
-init : String -> String -> String -> PageHandler Model Msg
-init baseUrl apiToken id =
+init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
+init baseUrl apiToken navigationKey id =
     return
         { apiToken = apiToken
         , baseUrl = baseUrl
         , id = id
         , page = Loading
+        , navigationKey = navigationKey
         }
         |> andPerform (Data.getData baseUrl apiToken id DataLoaded)
 
@@ -67,7 +70,7 @@ update msg model =
                 Just environment ->
                     let
                         ( subModel, cmd ) =
-                            Form.init model.baseUrl model.apiToken environment response.projects
+                            Form.init model.baseUrl model.apiToken model.navigationKey environment response.projects
                                 |> PageUtil.map Form FormMsg
                     in
                     ( { model | page = subModel }, cmd )

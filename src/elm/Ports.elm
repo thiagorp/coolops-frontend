@@ -1,4 +1,4 @@
-port module Ports exposing (..)
+port module Ports exposing (login, logout, onSessionChange)
 
 
 port login : String -> Cmd msg

@@ -18,7 +18,6 @@ import Util exposing (PageHandler, andPerform, return)
 
 type Msg
     = ApiResponse (Api.ApiResult (Maybe Data.Project))
-    | LinkClicked Route.Route
 
 
 type Remote
@@ -28,12 +27,14 @@ type Remote
 
 
 type alias Model =
-    { project : Remote }
+    { navigationKey : Route.NavigationKey
+    , project : Remote
+    }
 
 
-init : String -> String -> String -> PageHandler Model Msg
-init baseUrl apiToken projectId =
-    return { project = Loading }
+init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
+init baseUrl apiToken navigationKey projectId =
+    return { project = Loading, navigationKey = navigationKey }
         |> andPerform (Data.getData baseUrl apiToken projectId ApiResponse)
 
 
@@ -44,17 +45,13 @@ update msg model =
             case response of
                 Nothing ->
                     return model
-                        |> andPerform (Route.redirectTo (Route.Protected (Route.NewProject Route.CreateProject)))
+                        |> andPerform (Route.redirectTo model.navigationKey (Route.Protected (Route.NewProject Route.CreateProject)))
 
                 Just project ->
                     return { model | project = Success project }
 
         ApiResponse (Err _) ->
             return { model | project = Failed }
-
-        LinkClicked route ->
-            return model
-                |> andPerform (Route.redirectTo route)
 
 
 view : Model -> Html Msg
@@ -97,6 +94,6 @@ view model =
                         ]
                     ]
                 , div [ class "card-footer text-right" ]
-                    [ AppHtml.a (Route.Protected Route.ProjectsList) LinkClicked [ href "#", class "btn btn-primary" ] [ text "Finish" ]
+                    [ a [ href (Route.toUrl (Route.Protected Route.ProjectsList)), class "btn btn-primary" ] [ text "Finish" ]
                     ]
                 ]

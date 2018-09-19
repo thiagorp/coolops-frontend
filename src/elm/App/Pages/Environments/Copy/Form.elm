@@ -33,6 +33,7 @@ type alias Model =
     , formState : Validation.FormState Field
     , baseUrl : String
     , projects : List Data.Project
+    , navigationKey : Route.NavigationKey
     }
 
 
@@ -55,8 +56,8 @@ type Field
     | SlugField
 
 
-init : String -> String -> Data.Environment -> List Data.Project -> PageHandler Model Msg
-init baseUrl apiToken { environmentVars, projectId } projects =
+init : String -> String -> Route.NavigationKey -> Data.Environment -> List Data.Project -> PageHandler Model Msg
+init baseUrl apiToken navigationKey { environmentVars, projectId } projects =
     return
         { name = ""
         , slug = ""
@@ -70,6 +71,7 @@ init baseUrl apiToken { environmentVars, projectId } projects =
         , formState = Validation.initialState
         , baseUrl = baseUrl
         , projects = projects
+        , navigationKey = navigationKey
         }
 
 
@@ -172,7 +174,7 @@ update msg model =
 
         SubmitResponse (Ok response) ->
             return model
-                |> andPerform (Route.redirectTo (Route.Protected Route.ProjectsList))
+                |> andPerform (Route.redirectTo model.navigationKey (Route.Protected Route.ProjectsList))
 
 
 form : Model -> Html Msg
@@ -235,14 +237,14 @@ form model =
                 }
             ]
 
-        formConfig =
+        formData =
             { loading = submitting
             , error = Validation.getServerError model.formState
             , submitButtonText = "Create"
             , msg = Submit
             }
     in
-    Form.linearCardForm formConfig inputs
+    Form.linearCardForm formData inputs
 
 
 view : Model -> Html Msg

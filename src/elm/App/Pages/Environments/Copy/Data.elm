@@ -12,9 +12,9 @@ import Api.Object.Param as ParamApi
 import Api.Object.Project as ProjectApi
 import Api.Query as Query
 import Dict exposing (Dict)
-import Graphqelm.Field as Field
-import Graphqelm.Operation exposing (RootQuery)
-import Graphqelm.SelectionSet exposing (SelectionSet, hardcoded, with)
+import Graphql.Field as Field
+import Graphql.Operation exposing (RootQuery)
+import Graphql.SelectionSet exposing (SelectionSet, hardcoded, with)
 
 
 type alias Project =
@@ -37,7 +37,7 @@ type alias Response =
 
 param : SelectionSet ( String, String ) Api.Param
 param =
-    ParamApi.selection (,)
+    ParamApi.selection (\a b -> ( a, b ))
         |> with ParamApi.key
         |> with ParamApi.value
 

@@ -98,8 +98,13 @@ validate :
     -> ModelWithFormState model fieldName
 validate { validator } model =
     case model.formState of
-        FixingErrors errors ->
-            { model | formState = FixingErrors (ElmValidate.validate validator model) }
+        FixingErrors _ ->
+            case ElmValidate.validate validator model of
+                Ok _ ->
+                    { model | formState = FixingErrors [] }
+
+                Err errors ->
+                    { model | formState = FixingErrors errors }
 
         _ ->
             model
@@ -111,10 +116,10 @@ submit :
     -> result
 submit { validator, successCallback, errorCallback } model =
     case ElmValidate.validate validator model of
-        [] ->
+        Ok _ ->
             successCallback { model | formState = Submitting }
 
-        errors ->
+        Err errors ->
             errorCallback { model | formState = FixingErrors errors }
 
 
@@ -156,4 +161,4 @@ ifInvalidSlug getter fieldName =
 
 ifShorterThan : Int -> (model -> String) -> fieldName -> Validator fieldName model
 ifShorterThan minValue getter fieldName =
-    ElmValidate.ifTrue (\model -> String.length (getter model) < minValue) ( fieldName, "Is shorter than " ++ toString minValue ++ " characters" )
+    ElmValidate.ifTrue (\model -> String.length (getter model) < minValue) ( fieldName, "Is shorter than " ++ String.fromInt minValue ++ " characters" )

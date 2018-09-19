@@ -1,11 +1,10 @@
-module Form.Html
-    exposing
-        ( Input
-        , InputAttribute(..)
-        , InputType(..)
-        , input
-        , submitButton
-        )
+module Form.Html exposing
+    ( Input
+    , InputAttribute(..)
+    , InputType(..)
+    , input
+    , submitButton
+    )
 
 import Html
 import Html.Attributes as Attr
@@ -117,16 +116,16 @@ input { label, placeholder, errors, disabled, attributes } =
 submitButton : String -> Bool -> Html.Html msg
 submitButton text loading =
     let
-        addLoading loading attributes =
+        addLoading attrs =
             case loading of
                 True ->
-                    attributes ++ [ Attr.class "btn-loading", Attr.disabled True ]
+                    attrs ++ [ Attr.class "btn-loading", Attr.disabled True ]
 
                 False ->
-                    attributes
+                    attrs
 
         attributes =
             [ Attr.class "btn btn-primary btn-block", Attr.type_ "submit" ]
-                |> addLoading loading
+                |> addLoading
     in
     Html.button attributes [ Html.text text ]

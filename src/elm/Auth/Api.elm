@@ -29,14 +29,14 @@ type alias SignupResponse =
 
 
 encodeSignup : SignupRequest a -> String
-encodeSignup signup =
+encodeSignup request =
     Encode.encode 0 <|
         Encode.object
-            [ ( "first_name", Encode.string signup.firstName )
-            , ( "last_name", Encode.string signup.lastName )
-            , ( "email", Encode.string signup.email )
-            , ( "password", Encode.string signup.password )
-            , ( "company_name", Encode.string signup.companyName )
+            [ ( "first_name", Encode.string request.firstName )
+            , ( "last_name", Encode.string request.lastName )
+            , ( "email", Encode.string request.email )
+            , ( "password", Encode.string request.password )
+            , ( "company_name", Encode.string request.companyName )
             ]
 
 
@@ -68,11 +68,11 @@ type alias LoginResponse =
 
 
 encodeLogin : LoginRequest a -> String
-encodeLogin signup =
+encodeLogin request =
     Encode.encode 0 <|
         Encode.object
-            [ ( "email", Encode.string signup.email )
-            , ( "password", Encode.string signup.password )
+            [ ( "email", Encode.string request.email )
+            , ( "password", Encode.string request.password )
             ]
 
 

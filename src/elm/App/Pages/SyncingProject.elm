@@ -8,16 +8,18 @@ import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type alias Model =
-    { projectId : String }
+    { projectId : String
+    , navigationKey : NavigationKey
+    }
 
 
 type Msg
     = SyncResponse (Result Http.Error ())
 
 
-init : String -> String -> String -> String -> PageHandler Model Msg
-init baseUrl apiToken code projectId =
-    return { projectId = projectId }
+init : String -> String -> NavigationKey -> String -> String -> PageHandler Model Msg
+init baseUrl apiToken navigationKey code projectId =
+    return { projectId = projectId, navigationKey = navigationKey }
         |> andPerform (connectProjectWithSlack baseUrl apiToken SyncResponse { code = code, projectId = projectId })
 
 
@@ -26,7 +28,7 @@ update msg model =
     case msg of
         SyncResponse _ ->
             return model
-                |> andPerform (redirectTo (Protected (EditProject model.projectId)))
+                |> andPerform (redirectTo model.navigationKey (Protected (EditProject model.projectId)))
 
 
 view : Model -> Html Msg

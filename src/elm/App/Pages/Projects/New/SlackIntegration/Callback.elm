@@ -16,16 +16,18 @@ import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type alias Model =
-    { projectId : String }
+    { navigationKey : NavigationKey
+    , projectId : String
+    }
 
 
 type Msg
     = SyncResponse (Result Http.Error ())
 
 
-init : String -> String -> String -> String -> PageHandler Model Msg
-init baseUrl apiToken code projectId =
-    return { projectId = projectId }
+init : String -> String -> NavigationKey -> String -> String -> PageHandler Model Msg
+init baseUrl apiToken navigationKey code projectId =
+    return { projectId = projectId, navigationKey = navigationKey }
         |> andPerform (connectProjectWithSlack baseUrl apiToken SyncResponse { code = code, projectId = projectId })
 
 
@@ -34,11 +36,11 @@ update msg model =
     case msg of
         SyncResponse (Ok _) ->
             return model
-                |> andPerform (modifyTo (Protected (NewProject (CreateEnvironments model.projectId))))
+                |> andPerform (modifyTo model.navigationKey (Protected (NewProject (CreateEnvironments model.projectId))))
 
         SyncResponse (Err _) ->
             return model
-                |> andPerform (modifyTo (Protected (NewProject (IntegrateWithSlack model.projectId True))))
+                |> andPerform (modifyTo model.navigationKey (Protected (NewProject (IntegrateWithSlack model.projectId True))))
 
 
 view : Model -> Html Msg

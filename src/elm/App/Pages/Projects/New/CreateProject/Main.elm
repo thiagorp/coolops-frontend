@@ -25,6 +25,7 @@ type alias Model =
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
+    , navigationKey : Route.NavigationKey
     }
 
 
@@ -40,8 +41,8 @@ type Msg
     | SubmitResponse (Result Http.Error Api.Project)
 
 
-init : String -> String -> PageHandler Model Msg
-init baseUrl apiToken =
+init : String -> String -> Route.NavigationKey -> PageHandler Model Msg
+init baseUrl apiToken navigationKey =
     return
         { name = ""
         , slug = ""
@@ -50,6 +51,7 @@ init baseUrl apiToken =
         , apiToken = apiToken
         , formState = Validation.initialState
         , baseUrl = baseUrl
+        , navigationKey = navigationKey
         }
 
 
@@ -130,7 +132,7 @@ update msg model =
                     Route.IntegrateWithSlack response.id False
                         |> Route.NewProject
                         |> Route.Protected
-                        |> Route.redirectTo
+                        |> Route.redirectTo model.navigationKey
             in
             return model
                 |> andPerform redirect
@@ -182,11 +184,11 @@ view { formState, slug } =
                 }
             ]
 
-        formConfig =
+        formData =
             { loading = submitting
             , error = Validation.getServerError formState
             , submitButtonText = "Continue"
             , msg = Submit
             }
     in
-    Form.linearCardForm formConfig inputs
+    Form.linearCardForm formData inputs

@@ -2,16 +2,19 @@ module Main exposing (main)
 
 import App.Main as App
 import Auth.Main as Auth
+import Browser
+import Browser.Navigation as Navigation
 import Html
-import Navigation
 import NotFound
 import Ports exposing (onSessionChange)
 import Public.Main as Public
 import Route
+import Url
 
 
 type Msg
-    = UrlChanged Navigation.Location
+    = UrlChanged Url.Url
+    | LinkClicked Browser.UrlRequest
     | SessionChanged (Maybe String)
     | AppMsg App.Msg
     | AuthMsg Auth.Msg
@@ -35,6 +38,7 @@ type alias Flags =
 type alias Model =
     { page : Page
     , token : Maybe String
+    , navigationKey : Navigation.Key
     , baseUrl : String
     }
 
@@ -46,7 +50,7 @@ wrapPage toPage toCmd model ( subModel, subCmd ) =
 
 redirectTo : Route.Route -> Model -> ( Model, Cmd Msg )
 redirectTo route model =
-    ( { model | page = Transitioning }, Route.redirectTo route )
+    ( { model | page = Transitioning }, Route.redirectTo model.navigationKey route )
 
 
 handleAppRoute : Model -> Route.ProtectedRoute -> ( Model, Cmd Msg )
@@ -63,7 +67,7 @@ handleAppRoute model route =
                         |> wrapPage App AppMsg model
 
                 _ ->
-                    App.init model.baseUrl token route
+                    App.init model.baseUrl token model.navigationKey route
                         |> wrapPage App AppMsg model
 
 
@@ -93,11 +97,11 @@ handlePublicRoute model route =
                 |> wrapPage Public PublicMsg model
 
         _ ->
-            Public.init model.baseUrl route
+            Public.init model.baseUrl model.navigationKey route
                 |> wrapPage Public PublicMsg model
 
 
-setPage : Model -> Navigation.Location -> ( Model, Cmd Msg )
+setPage : Model -> Url.Url -> ( Model, Cmd Msg )
 setPage model location =
     case Route.routeFromLocation location of
         Just (Route.Protected route) ->
@@ -113,9 +117,9 @@ setPage model location =
             ( { model | page = NotFound }, Cmd.none )
 
 
-init : Flags -> Navigation.Location -> ( Model, Cmd Msg )
-init { token, baseUrl } =
-    setPage (Model Transitioning token baseUrl)
+init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
+init { token, baseUrl } url navigationKey =
+    setPage (Model Transitioning token navigationKey baseUrl) url
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -131,10 +135,18 @@ update msg model =
                         Nothing ->
                             Route.authRoot
             in
-            ( { model | token = newToken }, Route.redirectTo page )
+            ( { model | token = newToken }, Route.redirectTo model.navigationKey page )
 
         UrlChanged location ->
             setPage model location
+
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Navigation.pushUrl model.navigationKey (Url.toString url) )
+
+                Browser.External href ->
+                    ( model, Navigation.load href )
 
         AuthMsg subMsg ->
             case model.page of
@@ -164,26 +176,30 @@ update msg model =
                     ( model, Cmd.none )
 
 
-view : Model -> Html.Html Msg
+view : Model -> Browser.Document Msg
 view model =
-    case model.page of
-        Transitioning ->
-            Html.p [] [ Html.text "Redirecting..." ]
+    let
+        body =
+            case model.page of
+                Transitioning ->
+                    Html.p [] [ Html.text "Redirecting..." ]
 
-        NotFound ->
-            NotFound.view
+                NotFound ->
+                    NotFound.view
 
-        App subModel ->
-            App.view subModel
-                |> Html.map AppMsg
+                App subModel ->
+                    App.view subModel
+                        |> Html.map AppMsg
 
-        Auth subModel ->
-            Auth.view subModel
-                |> Html.map AuthMsg
+                Auth subModel ->
+                    Auth.view subModel
+                        |> Html.map AuthMsg
 
-        Public subModel ->
-            Public.view subModel
-                |> Html.map PublicMsg
+                Public subModel ->
+                    Public.view subModel
+                        |> Html.map PublicMsg
+    in
+    { title = "CoolOps.io", body = [ body ] }
 
 
 pageSubscriptions : Model -> Sub Msg
@@ -218,9 +234,11 @@ subscriptions model =
 
 main : Program Flags Model Msg
 main =
-    Navigation.programWithFlags UrlChanged
+    Browser.application
         { view = view
         , init = init
         , update = update
         , subscriptions = subscriptions
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
         }

@@ -10,8 +10,8 @@ import Api.Object as Api
 import Api.Object.Project as ProjectApi
 import Api.Object.SlackConfiguration as SlackConfigurationApi
 import Api.Query as Query
-import Graphqelm.Operation exposing (RootQuery)
-import Graphqelm.SelectionSet exposing (SelectionSet, with)
+import Graphql.Operation exposing (RootQuery)
+import Graphql.SelectionSet exposing (SelectionSet, with)
 
 
 type alias SlackConfiguration =

@@ -195,8 +195,8 @@ dropdownInputHtml config =
 keyValueInputHtml : KeyValueInputConfig msg -> Html.Html msg
 keyValueInputHtml config =
     let
-        addedRow key val inputs =
-            inputs
+        addedRow key val inp =
+            inp
                 ++ [ Html.div [ Attr.class "col col-12 col-lg-5" ]
                         [ Html.div [ Attr.class "form-group" ]
                             [ Html.input
@@ -335,17 +335,17 @@ input obj =
 submitButton : String -> Bool -> Html.Html msg
 submitButton text loading =
     let
-        addLoading loading attributes =
+        addLoading attrs =
             case loading of
                 True ->
-                    attributes ++ [ Attr.class "btn-loading", Attr.disabled True ]
+                    attrs ++ [ Attr.class "btn-loading", Attr.disabled True ]
 
                 False ->
-                    attributes
+                    attrs
 
         attributes =
             [ Attr.class "btn btn-primary", Attr.type_ "submit" ]
-                |> addLoading loading
+                |> addLoading
     in
     Html.button attributes [ Html.text text ]
 
@@ -361,8 +361,8 @@ linearCardFormWithTitle { error, loading, submitButtonText, msg } maybeTitle inp
                 Nothing ->
                     []
 
-                Just error ->
-                    [ Html.p [ Attr.class "text-red" ] [ Html.text error ] ]
+                Just e ->
+                    [ Html.p [ Attr.class "text-red" ] [ Html.text e ] ]
 
         button =
             [ submitButton submitButtonText loading ]

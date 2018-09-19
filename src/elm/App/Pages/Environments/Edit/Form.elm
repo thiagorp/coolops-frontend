@@ -28,6 +28,7 @@ type alias Model =
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
+    , navigationKey : Route.NavigationKey
     }
 
 
@@ -46,8 +47,8 @@ type Field
     = NameField
 
 
-init : String -> String -> Environment -> PageHandler Model Msg
-init baseUrl apiToken { id, name, environmentVars } =
+init : String -> String -> Route.NavigationKey -> Environment -> PageHandler Model Msg
+init baseUrl apiToken navigationKey { id, name, environmentVars } =
     return
         { id = id
         , name = name
@@ -58,6 +59,7 @@ init baseUrl apiToken { id, name, environmentVars } =
         , apiToken = apiToken
         , formState = Validation.initialState
         , baseUrl = baseUrl
+        , navigationKey = navigationKey
         }
 
 
@@ -138,7 +140,7 @@ update msg model =
 
         SubmitResponse (Ok response) ->
             return model
-                |> andPerform (Route.redirectTo (Route.Protected Route.ProjectsList))
+                |> andPerform (Route.redirectTo model.navigationKey (Route.Protected Route.ProjectsList))
 
 
 form : Model -> Html Msg
@@ -177,14 +179,14 @@ form model =
                 }
             ]
 
-        formConfig =
+        formData =
             { loading = submitting
             , error = Validation.getServerError model.formState
             , submitButtonText = "Save"
             , msg = Submit
             }
     in
-    Form.linearCardForm formConfig inputs
+    Form.linearCardForm formData inputs
 
 
 view : Model -> Html Msg

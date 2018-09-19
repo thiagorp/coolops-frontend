@@ -20,6 +20,7 @@ type alias Model =
     , baseUrl : String
     , apiData : Api.ApiData Data.Response
     , error : Bool
+    , navigationKey : Route.NavigationKey
     }
 
 
@@ -27,13 +28,14 @@ type Msg
     = DataLoaded (Api.ApiResult Data.Response)
 
 
-init : String -> String -> String -> Bool -> PageHandler Model Msg
-init baseUrl apiToken projectId error =
+init : String -> String -> Route.NavigationKey -> String -> Bool -> PageHandler Model Msg
+init baseUrl apiToken navigationKey projectId error =
     return
         { apiToken = apiToken
         , baseUrl = baseUrl
         , error = error
         , apiData = Loading
+        , navigationKey = navigationKey
         }
         |> andPerform (Data.getData baseUrl apiToken projectId DataLoaded)
 
@@ -48,7 +50,7 @@ update msg model =
 
                 Nothing ->
                     return model
-                        |> andPerform (Route.redirectTo (Route.Protected (Route.NewProject Route.CreateProject)))
+                        |> andPerform (Route.redirectTo model.navigationKey (Route.Protected (Route.NewProject Route.CreateProject)))
 
         DataLoaded (Err e) ->
             return { model | apiData = Failure e }

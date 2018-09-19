@@ -28,11 +28,12 @@ type alias Model =
     , slackClientId : String
     , formState : Validation.FormState Field
     , baseUrl : String
+    , navigationKey : Route.NavigationKey
     }
 
 
-init : String -> String -> Data.Project -> Data.SlackConfiguration -> PageHandler Model Msg
-init baseUrl apiToken { id, name, deploymentImage, accessToken } { clientId } =
+init : String -> String -> Route.NavigationKey -> Data.Project -> Data.SlackConfiguration -> PageHandler Model Msg
+init baseUrl apiToken navigationKey { id, name, deploymentImage, accessToken } { clientId } =
     return
         { apiToken = apiToken
         , baseUrl = baseUrl
@@ -42,6 +43,7 @@ init baseUrl apiToken { id, name, deploymentImage, accessToken } { clientId } =
         , deploymentImage = deploymentImage
         , accessToken = accessToken
         , slackClientId = clientId
+        , navigationKey = navigationKey
         }
 
 
@@ -104,7 +106,7 @@ update msg model =
 
         SubmitResponse (Ok response) ->
             return model
-                |> andPerform (Route.redirectTo (Route.Protected Route.ProjectsList))
+                |> andPerform (Route.redirectTo model.navigationKey (Route.Protected Route.ProjectsList))
 
 
 redirectUri : Model -> String
@@ -120,9 +122,6 @@ formBody model submitting =
 
         errorsOf =
             Validation.errorsOf model.formState
-
-        submitting =
-            Validation.isSubmitting model.formState
 
         inputs =
             [ Form.StaticTextInput

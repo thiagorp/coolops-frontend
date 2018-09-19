@@ -4,23 +4,23 @@ module Api exposing
     , send
     )
 
-import Graphqelm.Http
-import Graphqelm.Operation exposing (RootQuery)
-import Graphqelm.SelectionSet exposing (SelectionSet)
+import Graphql.Http
+import Graphql.Operation exposing (RootQuery)
+import Graphql.SelectionSet exposing (SelectionSet)
 import RemoteData as RD
 
 
 type alias ApiResult a =
-    Result (Graphqelm.Http.Error a) a
+    Result (Graphql.Http.Error a) a
 
 
 type alias ApiData a =
-    RD.RemoteData (Graphqelm.Http.Error a) a
+    RD.RemoteData (Graphql.Http.Error a) a
 
 
 send : String -> String -> (ApiResult a -> msg) -> SelectionSet a RootQuery -> Cmd msg
 send baseUrl token msg query =
     query
-        |> Graphqelm.Http.queryRequest (baseUrl ++ "/graphql")
-        |> Graphqelm.Http.withHeader "authorization" ("Token " ++ token)
-        |> Graphqelm.Http.send msg
+        |> Graphql.Http.queryRequest (baseUrl ++ "/graphql")
+        |> Graphql.Http.withHeader "authorization" ("Token " ++ token)
+        |> Graphql.Http.send msg

@@ -7,15 +7,14 @@ module Auth.Pages.Signup exposing
     )
 
 import Auth.Api as Api
-import Auth.AppHtml exposing (a)
 import Auth.Layouts.Authentication as AuthenticationLayout
 import Form.Html exposing (InputAttribute(..), InputType(..))
 import Form.Validation as Validation
-import Html exposing (Html, div, text)
+import Html exposing (Html, a, div, text)
 import Html.Attributes exposing (class, href)
 import Http as Http
 import Ports
-import Route as Route exposing (AuthRoute(Login), Route(Auth), toUrl)
+import Route as Route exposing (AuthRoute(..), Route(..), toUrl)
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
@@ -63,7 +62,6 @@ type Msg
     = FieldUpdated Field String
     | Signup
     | SignupCallback (Result Http.Error Api.SignupResponse)
-    | LinkClicked Route
 
 
 updateField : Model -> Field -> String -> Model
@@ -114,10 +112,6 @@ signup model =
 update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
-        LinkClicked route ->
-            return model
-                |> andPerform (Route.redirectTo route)
-
         FieldUpdated field value ->
             updateField model field value
                 |> Validation.validate formConfig
@@ -206,6 +200,6 @@ view model =
         [ AuthenticationLayout.form submitting Signup "Create new account" serverError inputs
         , div [ class "text-center text-muted" ]
             [ text "Already have an account? "
-            , a (Auth Login) LinkClicked [] [ text "Sign in" ]
+            , a [ href (toUrl (Auth Login)) ] [ text "Sign in" ]
             ]
         ]

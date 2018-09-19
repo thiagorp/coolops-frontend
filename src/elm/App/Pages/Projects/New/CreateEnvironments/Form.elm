@@ -46,7 +46,6 @@ type Msg
     | EnvVarAdded
     | EnvVarRemoved String
     | EnvVarEditClicked String
-    | LinkClicked Route.Route
     | NameUpdated String
     | SlugUpdated String
     | Submit
@@ -184,10 +183,6 @@ update msg model =
             { model | environmentVars = Dict.remove key model.environmentVars }
                 |> return
 
-        LinkClicked route ->
-            return model
-                |> andPerform (Route.redirectTo route)
-
         Submit ->
             Validation.submit formConfig model
 
@@ -302,8 +297,8 @@ view model =
                 Nothing ->
                     []
 
-                Just error ->
-                    [ p [ class "text-red" ] [ text error ] ]
+                Just e ->
+                    [ p [ class "text-red" ] [ text e ] ]
     in
     Html.form [ class "card", onSubmit Submit ]
         [ div [ class "card-body" ]
@@ -315,10 +310,8 @@ view model =
                 ++ error
             )
         , div [ class "card-footer text-right" ]
-            [ AppHtml.a
-                (Route.Protected (Route.NewProject (Route.IntegrateWithCI model.projectId)))
-                LinkClicked
-                [ class "btn btn-link mr-2" ]
+            [ a
+                [ class "btn btn-link mr-2", href (Route.toUrl (Route.Protected (Route.NewProject (Route.IntegrateWithCI model.projectId)))) ]
                 [ text "Continue to the next step (unsaved data will be lost)" ]
             , button [ class "btn btn-primary", type_ "submit", disabled submitting ] [ text "Save" ]
             ]

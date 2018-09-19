@@ -12,6 +12,7 @@ import App.Pages.Projects.Edit.Data as Data
 import App.Pages.Projects.Edit.Form as Form
 import App.Pages.ServerError as ServerError
 import Html exposing (..)
+import Route
 import Util as PageUtil exposing (PageHandler, andPerform, noop, return)
 
 
@@ -27,6 +28,7 @@ type alias Model =
     , baseUrl : String
     , apiToken : String
     , projectId : String
+    , navigationKey : Route.NavigationKey
     }
 
 
@@ -35,13 +37,14 @@ type Msg
     | DataLoaded (Api.ApiResult Data.Response)
 
 
-init : String -> String -> String -> PageHandler Model Msg
-init baseUrl apiToken projectId =
+init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
+init baseUrl apiToken navigationKey projectId =
     return
         { apiToken = apiToken
         , baseUrl = baseUrl
         , projectId = projectId
         , page = Loading
+        , navigationKey = navigationKey
         }
         |> andPerform (Data.getData baseUrl apiToken projectId DataLoaded)
 
@@ -67,7 +70,7 @@ update msg model =
                 Just project ->
                     let
                         ( subModel, cmd ) =
-                            Form.init model.baseUrl model.apiToken project response.slackConfiguration
+                            Form.init model.baseUrl model.apiToken model.navigationKey project response.slackConfiguration
                                 |> PageUtil.map Form FormMsg
                     in
                     ( { model | page = subModel }, cmd )

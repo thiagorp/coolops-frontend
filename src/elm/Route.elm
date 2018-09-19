@@ -1,5 +1,6 @@
 module Route exposing
     ( AuthRoute(..)
+    , NavigationKey
     , NewProjectStep(..)
     , ProtectedRoute(..)
     , PublicRoute(..)
@@ -12,8 +13,15 @@ module Route exposing
     , toUrl
     )
 
-import Navigation
-import UrlParser as Url exposing (..)
+import Browser.Navigation as Navigation
+import Dict
+import Url exposing (Url)
+import Url.Parser as Url exposing (..)
+import Url.Parser.Query as Query
+
+
+type alias NavigationKey =
+    Navigation.Key
 
 
 type NewProjectStep
@@ -61,40 +69,33 @@ protectedRoot =
     Protected Home
 
 
-redirectTo : Route -> Cmd msg
-redirectTo route =
+redirectTo : Navigation.Key -> Route -> Cmd msg
+redirectTo key route =
     toUrl route
-        |> Navigation.newUrl
+        |> Navigation.pushUrl key
 
 
-modifyTo : Route -> Cmd msg
-modifyTo route =
+modifyTo : Navigation.Key -> Route -> Cmd msg
+modifyTo key route =
     toUrl route
-        |> Navigation.modifyUrl
+        |> Navigation.replaceUrl key
 
 
-routeFromLocation : Navigation.Location -> Maybe Route
-routeFromLocation location =
-    Url.parsePath
+routeFromLocation : Url -> Maybe Route
+routeFromLocation =
+    Url.parse
         (Url.oneOf
             [ Url.map Auth authRouteParser
             , Url.map Protected protectedRouteParser
             , Url.map Public publicRouteParser
             ]
         )
-        location
 
 
-boolParam : String -> Url.QueryParser (Bool -> a) a
+boolParam : String -> Query.Parser Bool
 boolParam name =
-    customParam name <|
-        \maybeValue ->
-            case maybeValue of
-                Just "true" ->
-                    True
-
-                _ ->
-                    False
+    Query.enum name (Dict.fromList [ ( "true", True ), ( "false", False ) ])
+        |> Query.map (Maybe.withDefault False)
 
 
 authRouteParser : Url.Parser (AuthRoute -> a) a
@@ -109,7 +110,7 @@ publicRouteParser : Url.Parser (PublicRoute -> a) a
 publicRouteParser =
     Url.oneOf
         [ Url.map DeploymentLogs (s "deployments" </> string </> s "logs")
-        , Url.map SlackCallback (s "slack" </> s "callback" <?> stringParam "code" <?> stringParam "state")
+        , Url.map SlackCallback (s "slack" </> s "callback" <?> Query.string "code" <?> Query.string "state")
         ]
 
 

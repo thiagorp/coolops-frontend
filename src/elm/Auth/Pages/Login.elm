@@ -13,7 +13,7 @@ import Form.Validation as Validation
 import Html exposing (Html, div, text)
 import Http as Http
 import Ports
-import Route exposing (AuthRoute(Signup), Route(Auth), toUrl)
+import Route exposing (AuthRoute(..), Route(..), toUrl)
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
@@ -52,7 +52,6 @@ type Msg
     = FieldUpdated Field String
     | Login
     | LoginCallback (Result Http.Error Api.SignupResponse)
-    | LinkClicked Route
 
 
 updateField : Model -> Field -> String -> Model
@@ -82,10 +81,6 @@ login model =
 update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
-        LinkClicked route ->
-            return model
-                |> andPerform (Route.redirectTo route)
-
         FieldUpdated field value ->
             updateField model field value
                 |> Validation.validate formConfig

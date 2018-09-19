@@ -28,6 +28,7 @@ type alias Model =
     , baseUrl : String
     , data : Remote
     , projectId : String
+    , navigationKey : Route.NavigationKey
     }
 
 
@@ -36,13 +37,14 @@ type Msg
     | FormMsg Form.Msg
 
 
-init : String -> String -> String -> PageHandler Model Msg
-init baseUrl apiToken projectId =
+init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
+init baseUrl apiToken navigationKey projectId =
     return
         { apiToken = apiToken
         , baseUrl = baseUrl
         , data = Loading
         , projectId = projectId
+        , navigationKey = navigationKey
         }
         |> andPerform (Data.getData baseUrl apiToken projectId DataLoaded)
 
@@ -52,14 +54,14 @@ update msg model =
     case msg of
         FormMsg subMsg ->
             case model.data of
-                Loaded form project ->
+                Loaded subModel project ->
                     case subMsg of
                         Form.SubmitResponse (Ok _) ->
                             return model
                                 |> andPerform (Data.getData model.baseUrl model.apiToken model.projectId DataLoaded)
 
                         _ ->
-                            Form.update subMsg form
+                            Form.update subMsg subModel
                                 |> Util.map (\f -> { model | data = Loaded f project }) FormMsg
 
                 _ ->
@@ -69,15 +71,15 @@ update msg model =
             case response.currentProject of
                 Just project ->
                     let
-                        updateModel form =
-                            { model | data = Loaded form project }
+                        updateModel subModel =
+                            { model | data = Loaded subModel project }
                     in
                     Form.init model.baseUrl model.apiToken model.projectId response.allProjects
                         |> Util.map updateModel FormMsg
 
                 Nothing ->
                     return model
-                        |> andPerform (Route.redirectTo (Route.Protected (Route.NewProject Route.CreateProject)))
+                        |> andPerform (Route.redirectTo model.navigationKey (Route.Protected (Route.NewProject Route.CreateProject)))
 
         DataLoaded (Err _) ->
             return { model | data = Error }
@@ -93,10 +95,10 @@ existingEnvironment { name } =
 
 
 form : Form.Model -> Data.Project -> Html Msg
-form form project =
+form subModel project =
     div []
         (List.map existingEnvironment project.environments
-            ++ [ Form.view form
+            ++ [ Form.view subModel
                     |> Html.map FormMsg
                ]
         )

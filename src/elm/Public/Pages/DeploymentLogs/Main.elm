@@ -12,13 +12,13 @@ import Html.Attributes exposing (..)
 import Http exposing (Error)
 import Public.Pages.DeploymentLogs.Data exposing (..)
 import RemoteData exposing (RemoteData(..), WebData)
-import Time exposing (Time, second)
+import Time exposing (Posix)
 import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type Msg
     = DeploymentLogsResponse (Result Error DeploymentLogs)
-    | Tick Time
+    | Tick Time.Posix
 
 
 type alias Model =
@@ -46,11 +46,9 @@ update msg model =
 logsView : DeploymentLogs -> Html Msg
 logsView { logs } =
     pre
-        [ style
-            [ ( "backgroundColor", "#212121" )
-            , ( "color", "#edede3" )
-            , ( "marginTop", "30px" )
-            ]
+        [ style "backgroundColor" "#212121"
+        , style "color" "#edede3"
+        , style "marginTop" "30px"
         ]
         [ text logs ]
 
@@ -72,14 +70,12 @@ spinner { finished } state =
 
         False ->
             div
-                [ style
-                    [ ( "width", "20px" )
-                    , ( "height", "20px" )
-                    , ( "borderRadius", "10px" )
-                    , ( "backgroundColor", "#edede3" )
-                    , ( "transform", transform )
-                    , ( "transition", "all 1s ease-in-out" )
-                    ]
+                [ style "width" "20px"
+                , style "height" "20px"
+                , style "borderRadius" "10px"
+                , style "backgroundColor" "#edede3"
+                , style "transform" transform
+                , style "transition" "all 1s ease-in-out"
                 ]
                 []
 
@@ -89,8 +85,8 @@ view model =
     case model.logs of
         Success deploymentLogs ->
             div [ class "container" ]
-                [ div [ style [ ( "position", "relative" ) ] ]
-                    [ div [ style [ ( "position", "absolute" ), ( "bottom", "10px" ), ( "right", "10px" ) ] ]
+                [ div [ style "position" "relative" ]
+                    [ div [ style "position" "absolute", style "bottom" "10px", style "right" "10px" ]
                         [ spinner deploymentLogs model.spinnerState ]
                     , logsView deploymentLogs
                     ]
@@ -106,7 +102,7 @@ subscriptions { logs } =
         Success deploymentLogs ->
             case deploymentLogs.finished of
                 False ->
-                    Time.every second Tick
+                    Time.every 1000 Tick
 
                 True ->
                     Sub.none

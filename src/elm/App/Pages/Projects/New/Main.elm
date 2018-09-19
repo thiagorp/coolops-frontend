@@ -42,32 +42,32 @@ type alias Model =
     }
 
 
-stepFromRoute : String -> String -> Route.NewProjectStep -> PageHandler Step Msg
-stepFromRoute baseUrl apiToken route =
+stepFromRoute : String -> String -> Route.NavigationKey -> Route.NewProjectStep -> PageHandler Step Msg
+stepFromRoute baseUrl apiToken navigationKey route =
     case route of
         Route.CreateProject ->
-            CreateProject.init baseUrl apiToken
+            CreateProject.init baseUrl apiToken navigationKey
                 |> Util.map CreateProject CreateProjectMsg
 
         Route.IntegrateWithSlack projectId error ->
-            SlackIntegration.init baseUrl apiToken projectId error
+            SlackIntegration.init baseUrl apiToken navigationKey projectId error
                 |> Util.map SlackIntegration SlackIntegrationMsg
 
         Route.IntegrateWithSlackCallback projectId code ->
-            SlackIntegrationCallback.init baseUrl apiToken code projectId
+            SlackIntegrationCallback.init baseUrl apiToken navigationKey code projectId
                 |> Util.map SlackIntegrationCallback SlackIntegrationCallbackMsg
 
         Route.CreateEnvironments projectId ->
-            CreateEnvironments.init baseUrl apiToken projectId
+            CreateEnvironments.init baseUrl apiToken navigationKey projectId
                 |> Util.map CreateEnvironments CreateEnvironmentsMsg
 
         Route.IntegrateWithCI projectId ->
-            CIIntegration.init baseUrl apiToken projectId
+            CIIntegration.init baseUrl apiToken navigationKey projectId
                 |> Util.map CIIntegration CIIntegrationMsg
 
 
-init : String -> String -> Route.NewProjectStep -> PageHandler Model Msg
-init baseUrl apiToken route =
+init : String -> String -> Route.NavigationKey -> Route.NewProjectStep -> PageHandler Model Msg
+init baseUrl apiToken navigationKey route =
     let
         setModel step =
             { apiToken = apiToken
@@ -75,7 +75,7 @@ init baseUrl apiToken route =
             , step = step
             }
     in
-    stepFromRoute baseUrl apiToken route
+    stepFromRoute baseUrl apiToken navigationKey route
         |> Util.map setModel identity
 
 

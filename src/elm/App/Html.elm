@@ -1,4 +1,37 @@
-module App.Html exposing (..)
+module App.Html exposing
+    ( Action(..)
+    , ButtonColor(..)
+    , ButtonConfig
+    , ButtonSize(..)
+    , ColConfig
+    , ColSize(..)
+    , Icon(..)
+    , StatusIcon(..)
+    , actionButton
+    , button
+    , buttonConfig
+    , cardBody
+    , cardWithTitle
+    , col
+    , colSize
+    , container
+    , externalLink
+    , fullscreenCard
+    , i
+    , img
+    , pageHeader
+    , pageHeaderWithActions
+    , row
+    , spinner
+    , statusIcon
+    , table
+    , tbody
+    , td
+    , text
+    , th
+    , thead
+    , tr
+    )
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -122,8 +155,8 @@ button msg config =
                 Nothing ->
                     []
 
-                Just icon ->
-                    [ i icon [ class "mr-2" ] ]
+                Just iconType ->
+                    [ i iconType [ class "mr-2" ] ]
     in
     Html.button attributes (icon ++ [ text config.text ])
 
@@ -181,7 +214,7 @@ col { colSmSize, colMdSize, colLgSize } =
 
 spinner : Html msg
 spinner =
-    div [ style [ ( "padding", "60px" ), ( "text-align", "center" ), ( "width", "100%" ) ] ]
+    div [ style "padding" "60px", style "text-align" "center", style "width" "100%" ]
         [ div [ class "spinner" ]
             [ div [ class "bounce1" ] []
             , div [ class "bounce2" ] []
@@ -260,53 +293,3 @@ externalLink url customAttributes children =
             customAttributes ++ [ href url ]
     in
     Html.a attributes children
-
-
-a : Route -> (Route -> msg) -> List (Attribute msg) -> List (Html msg) -> Html msg
-a route msg customAttributes children =
-    let
-        attributes =
-            customAttributes
-                ++ [ href (toUrl route), onPreventDefaultClick (msg route) ]
-    in
-    Html.a attributes children
-
-
-
--- See https://github.com/elm-lang/html/issues/110
-
-
-onPreventDefaultClick : msg -> Attribute msg
-onPreventDefaultClick message =
-    onWithOptions "click"
-        { defaultOptions | preventDefault = True }
-        (preventDefault2
-            |> Json.Decode.andThen (maybePreventDefault message)
-        )
-
-
-preventDefault2 : Json.Decode.Decoder Bool
-preventDefault2 =
-    Json.Decode.map2
-        invertedOr
-        (Json.Decode.field "ctrlKey" Json.Decode.bool)
-        (Json.Decode.field "metaKey" Json.Decode.bool)
-
-
-maybePreventDefault : msg -> Bool -> Json.Decode.Decoder msg
-maybePreventDefault msg preventDefault =
-    case preventDefault of
-        True ->
-            Json.Decode.succeed msg
-
-        False ->
-            Json.Decode.fail "Normal link"
-
-
-invertedOr : Bool -> Bool -> Bool
-invertedOr x y =
-    not (x || y)
-
-
-
--- End https://github.com/elm-lang/html/issues/110

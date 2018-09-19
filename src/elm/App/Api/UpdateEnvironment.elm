@@ -1,4 +1,4 @@
-module App.Api.UpdateEnvironment exposing (..)
+module App.Api.UpdateEnvironment exposing (Params, encode, encodeEnvVars, updateEnvironment)
 
 import App.Api.Common exposing (..)
 import Dict exposing (Dict)

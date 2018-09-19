@@ -14,10 +14,10 @@ import Api.Object.Deployment as DeploymentApi
 import Api.Object.Environment as EnvironmentApi
 import Api.Object.Project as ProjectApi
 import Api.Query as Query
-import Graphqelm.Field as Field
-import Graphqelm.Operation exposing (RootQuery)
-import Graphqelm.SelectionSet exposing (SelectionSet, with)
-import Time exposing (Time)
+import Graphql.Field as Field
+import Graphql.Operation exposing (RootQuery)
+import Graphql.SelectionSet exposing (SelectionSet, with)
+import Time exposing (Posix)
 
 
 type alias Build =
@@ -29,7 +29,7 @@ type alias Build =
 type alias Deployment =
     { id : String
     , build : Build
-    , startedAt : Maybe Time
+    , startedAt : Maybe Posix
     , status : DeploymentStatus
     }
 
@@ -64,7 +64,7 @@ deployment =
         |> with
             (DeploymentApi.startedAt
                 |> Field.map
-                    (Maybe.map (toFloat >> (*) Time.second))
+                    (Maybe.map (Time.millisToPosix << (*) 1000))
             )
         |> with DeploymentApi.status
 

@@ -21,9 +21,9 @@ type alias Model =
     { notFound : Bool }
 
 
-init : Maybe String -> Maybe String -> PageHandler Model Msg
-init maybeCode maybeState =
-    case Maybe.map2 (,) maybeCode maybeState of
+init : Route.NavigationKey -> Maybe String -> Maybe String -> PageHandler Model Msg
+init navigationKey maybeCode maybeState =
+    case Maybe.map2 (\a b -> ( a, b )) maybeCode maybeState of
         Nothing ->
             return { notFound = True }
 
@@ -31,11 +31,11 @@ init maybeCode maybeState =
             case String.split "|" state of
                 "newProject" :: projectId :: [] ->
                     return { notFound = False }
-                        |> andPerform (Route.modifyTo (Route.Protected (Route.NewProject (Route.IntegrateWithSlackCallback projectId code))))
+                        |> andPerform (Route.modifyTo navigationKey (Route.Protected (Route.NewProject (Route.IntegrateWithSlackCallback projectId code))))
 
                 projectId :: [] ->
                     return { notFound = False }
-                        |> andPerform (Route.modifyTo (Route.Protected (Route.SyncingProject code projectId)))
+                        |> andPerform (Route.modifyTo navigationKey (Route.Protected (Route.SyncingProject code projectId)))
 
                 _ ->
                     return { notFound = True }

@@ -9,11 +9,11 @@ module App.Fragments.Topbar.Main exposing
 
 import Api
 import App.Fragments.Topbar.Data as Data
-import App.Html as AppHtml
+import Browser.Events
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Mouse
+import Json.Decode as Decode
 import Ports
 import RemoteData exposing (RemoteData(..), WebData)
 import Route
@@ -23,20 +23,25 @@ import Util exposing (PageHandler, andPerform, noop, return)
 type Msg
     = Toggle
     | CloseDropdown
-    | LinkClicked Route.Route
     | ProfileLoaded (Api.ApiResult Data.User)
     | LogOut
 
 
+type Debouncer
+    = NotTriggered
+    | Triggered
+
+
 type alias Model =
     { dropdownOpened : Bool
+    , dropdownClickDebouncer : Debouncer
     , user : Api.ApiData Data.User
     }
 
 
 init : String -> String -> PageHandler Model Msg
 init baseUrl apiToken =
-    return { dropdownOpened = False, user = Loading }
+    return { dropdownOpened = False, dropdownClickDebouncer = NotTriggered, user = Loading }
         |> andPerform (Data.getProfile baseUrl apiToken ProfileLoaded)
 
 
@@ -44,7 +49,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.dropdownOpened of
         True ->
-            Mouse.clicks (\_ -> CloseDropdown)
+            Browser.Events.onClick (Decode.succeed CloseDropdown)
 
         False ->
             Sub.none
@@ -52,7 +57,7 @@ subscriptions model =
 
 toggleDropdown : Model -> Model
 toggleDropdown model =
-    { model | dropdownOpened = not model.dropdownOpened }
+    { model | dropdownOpened = True }
 
 
 update : Msg -> Model -> PageHandler Model Msg
@@ -68,11 +73,12 @@ update msg model =
                 |> return
 
         CloseDropdown ->
-            return { model | dropdownOpened = False }
+            case model.dropdownClickDebouncer of
+                NotTriggered ->
+                    return { model | dropdownClickDebouncer = Triggered }
 
-        LinkClicked route ->
-            return { model | dropdownOpened = False }
-                |> andPerform (Route.redirectTo route)
+                Triggered ->
+                    return { model | dropdownOpened = False, dropdownClickDebouncer = NotTriggered }
 
         LogOut ->
             return model
@@ -81,7 +87,7 @@ update msg model =
 
 dropdownMenu : List (Html Msg)
 dropdownMenu =
-    [ a [ class "dropdown-item", href "#", onClick LogOut ]
+    [ a [ class "dropdown-item", href "", onClick LogOut ]
         [ i [ class "dropdown-icon fe fe-log-out" ] []
         , text "Sign out"
         ]
@@ -93,9 +99,8 @@ dropdown model =
     case model.user of
         Success user ->
             div [ class "dropdown" ]
-                [ a
+                [ span
                     [ class "nav-link pr-0 leading-none"
-                    , attribute "data-toggle" "dropdown"
                     , onClick Toggle
                     ]
                     [ span [ class "avatar" ] [ text (String.left 1 user.firstName ++ String.left 1 user.lastName) ]
@@ -120,11 +125,7 @@ dropdown model =
 
 logo : Html Msg
 logo =
-    AppHtml.a
-        (Route.Protected Route.Home)
-        LinkClicked
-        [ class "header-brand" ]
-        [ text "CoolOps.io" ]
+    a [ class "header-brand", href (Route.toUrl (Route.Protected Route.Home)) ] [ text "CoolOps.io" ]
 
 
 view : Model -> Html Msg

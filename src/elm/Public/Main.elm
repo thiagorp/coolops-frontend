@@ -26,7 +26,10 @@ type Page
 
 
 type alias Model =
-    { page : Page, baseUrl : String }
+    { page : Page
+    , baseUrl : String
+    , navigationKey : Route.NavigationKey
+    }
 
 
 wrapPage : (model -> Page) -> (msg -> Msg) -> Model -> ( model, List (Cmd msg) ) -> ( Model, Cmd Msg )
@@ -57,13 +60,13 @@ setPage model route =
                 |> wrapPage DeploymentLogs DeploymentLogsMsg model
 
         Route.SlackCallback code state ->
-            SlackCallback.init code state
+            SlackCallback.init model.navigationKey code state
                 |> wrapPage SlackCallback SlackCallbackMsg model
 
 
-init : String -> Route.PublicRoute -> ( Model, Cmd Msg )
-init baseUrl =
-    setPage (Model Transitioning baseUrl)
+init : String -> Route.NavigationKey -> Route.PublicRoute -> ( Model, Cmd Msg )
+init baseUrl navigationKey =
+    setPage (Model Transitioning baseUrl navigationKey)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

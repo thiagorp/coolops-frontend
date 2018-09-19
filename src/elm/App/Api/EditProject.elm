@@ -1,4 +1,4 @@
-module App.Api.EditProject exposing (..)
+module App.Api.EditProject exposing (Params, editProject, encode)
 
 import App.Api.Common exposing (..)
 import Http

@@ -7,8 +7,8 @@ import Api
 import Api.Object as Api
 import Api.Object.Project as ProjectApi
 import Api.Query as Query
-import Graphqelm.Operation exposing (RootQuery)
-import Graphqelm.SelectionSet exposing (SelectionSet, with)
+import Graphql.Operation exposing (RootQuery)
+import Graphql.SelectionSet exposing (SelectionSet, with)
 
 
 type alias Project =

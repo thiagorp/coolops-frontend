@@ -53,6 +53,7 @@ type alias Model =
     { page : Page
     , apiToken : String
     , baseUrl : String
+    , navigationKey : Route.NavigationKey
     }
 
 
@@ -102,33 +103,33 @@ setPage model page =
                 |> wrapPage ProjectsList ProjectsListMsg model
 
         Route.NewProject step ->
-            NewProject.init model.baseUrl model.apiToken step
+            NewProject.init model.baseUrl model.apiToken model.navigationKey step
                 |> wrapPage NewProject NewProjectMsg model
 
         Route.EditProject projectId ->
-            EditProject.init model.baseUrl model.apiToken projectId
+            EditProject.init model.baseUrl model.apiToken model.navigationKey projectId
                 |> wrapPage EditProject EditProjectMsg model
 
         Route.NewEnvironment projectId ->
-            NewEnvironment.init model.baseUrl model.apiToken projectId
+            NewEnvironment.init model.baseUrl model.apiToken model.navigationKey projectId
                 |> wrapPage NewEnvironment NewEnvironmentMsg model
 
         Route.EditEnvironment environmentId ->
-            EditEnvironment.init model.baseUrl model.apiToken environmentId
+            EditEnvironment.init model.baseUrl model.apiToken model.navigationKey environmentId
                 |> wrapPage EditEnvironment EditEnvironmentMsg model
 
         Route.CopyEnvironment environmentId ->
-            CopyEnvironment.init model.baseUrl model.apiToken environmentId
+            CopyEnvironment.init model.baseUrl model.apiToken model.navigationKey environmentId
                 |> wrapPage CopyEnvironment CopyEnvironmentMsg model
 
         Route.SyncingProject code state ->
-            SyncingProject.init model.baseUrl model.apiToken code state
+            SyncingProject.init model.baseUrl model.apiToken model.navigationKey code state
                 |> wrapPage SyncingProject SyncingProjectMsg model
 
 
-init : String -> String -> Route.ProtectedRoute -> ( Model, Cmd Msg )
-init baseUrl apiToken =
-    setPage (Model NotFound apiToken baseUrl)
+init : String -> String -> Route.NavigationKey -> Route.ProtectedRoute -> ( Model, Cmd Msg )
+init baseUrl apiToken navigationKey =
+    setPage (Model NotFound apiToken baseUrl navigationKey)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
