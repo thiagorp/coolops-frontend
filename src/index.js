@@ -1,4 +1,3 @@
-import '../public/assets/css/tabler.css';
 import '../public/assets/css/checkmark-steps.css';
 import '../public/assets/css/spinner.css';
 import { Elm } from './elm/Main.elm';
