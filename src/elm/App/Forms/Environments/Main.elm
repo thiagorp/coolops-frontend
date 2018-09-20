@@ -1,16 +1,16 @@
-module App.Pages.Projects.New.CreateEnvironments.Form exposing
+module App.Forms.Environments.Main exposing
     ( Model
     , Msg(..)
     , init
+    , isSubmitting
     , update
     , view
     )
 
 import App.Api.CreateEnvironment as Api
-import App.Html as AppHtml
+import App.Forms.Environments.Data as Data
 import App.Html.Form as Form
-import App.Pages.Projects.New.CreateEnvironments.Data as Data
-import Dict exposing (Dict)
+import Dict
 import Form.Validation as Validation
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -25,7 +25,7 @@ type alias Model =
     { name : String
     , slug : String
     , slugModified : Bool
-    , environmentVars : Dict String String
+    , environmentVars : Dict.Dict String String
     , editingKey : String
     , editingValue : String
     , editingKeyError : Maybe (List String)
@@ -33,8 +33,8 @@ type alias Model =
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
-    , projects : List Data.ProjectForEnvironmentVars
-    , selectedEnvToCopy : Maybe Data.EnvironmentForEnvironmentVars
+    , projects : List Data.Project
+    , selectedEnvToCopy : Maybe Data.Environment
     }
 
 
@@ -57,7 +57,11 @@ type Field
     | SlugField
 
 
-init : String -> String -> String -> List Data.ProjectForEnvironmentVars -> PageHandler Model Msg
+
+-- Init
+
+
+init : String -> String -> String -> List Data.Project -> PageHandler Model Msg
 init baseUrl apiToken projectId projects =
     return
         { name = ""
@@ -74,6 +78,10 @@ init baseUrl apiToken projectId projects =
         , projects = projects
         , selectedEnvToCopy = Nothing
         }
+
+
+
+-- Update
 
 
 formConfig : Validation.FormConfig Model Field (PageHandler Model Msg)
@@ -205,57 +213,83 @@ update msg model =
             return model
 
 
-projectOptgroup : Data.ProjectForEnvironmentVars -> Html Msg
+isSubmitting : Model -> Bool
+isSubmitting model =
+    Validation.isSubmitting model.formState
+
+
+
+-- View
+
+
+projectOptgroup : Data.Project -> Html Msg
 projectOptgroup { name, environments } =
     optgroup [ attribute "label" name ]
         (List.map (\e -> option [ value e.id ] [ text e.name ]) environments)
 
 
-copyEnvironment : Bool -> Model -> Html Msg
-copyEnvironment submitting { projects, selectedEnvToCopy } =
+copyEnvironment : Model -> Html Msg
+copyEnvironment model =
     let
         noEnvSelected =
-            case selectedEnvToCopy of
+            case model.selectedEnvToCopy of
                 Nothing ->
                     True
 
                 Just _ ->
                     False
     in
-    case List.foldr ((+) << List.length << .environments) 0 projects of
+    case List.foldr ((+) << List.length << .environments) 0 model.projects of
         0 ->
             div [] []
 
         _ ->
             div [ class "form-group" ]
-                [ label [ class "form-label", for "new-environment-form-copy-environment-vars-input" ] [ text "Copy environment variables from another Environment" ]
+                [ label
+                    [ class "form-label"
+                    , for "new-environment-form-copy-environment-vars-input"
+                    ]
+                    [ text "Copy environment variables from another Environment" ]
                 , div [ class "row gutter-xs" ]
                     [ div [ class "col" ]
-                        [ select [ id "new-environment-form-copy-environment-vars-input", class "form-control", onInput EnvToCopyFromSelected, disabled submitting ]
+                        [ select
+                            [ id "new-environment-form-copy-environment-vars-input"
+                            , class "form-control"
+                            , onInput EnvToCopyFromSelected
+                            , disabled (isSubmitting model)
+                            ]
                             ([ option [ selected noEnvSelected ] [ text "" ] ]
-                                ++ List.map projectOptgroup projects
+                                ++ List.map projectOptgroup model.projects
                             )
                         ]
                     , div [ class "col-auto" ]
-                        [ button [ type_ "button", class "btn btn-secondary", onClick CopyEnvVars, disabled (noEnvSelected || submitting) ] [ text "Copy" ]
+                        [ button
+                            [ type_ "button"
+                            , class "btn btn-secondary"
+                            , onClick CopyEnvVars
+                            , disabled (noEnvSelected || isSubmitting model)
+                            ]
+                            [ text "Copy" ]
                         ]
                     ]
-                , div [] [ small [ class "form-text text-muted" ] [ text "You will be able to edit them after you copy" ] ]
+                , div
+                    []
+                    [ small
+                        [ class "form-text text-muted" ]
+                        [ text "You will be able to edit them after you copy" ]
+                    ]
                 ]
 
 
 view : Model -> Html Msg
 view model =
     let
-        submitting =
-            Validation.isSubmitting model.formState
-
         nameInput =
             Form.TextInput
                 { label = "Name"
                 , placeholder = "E.g. Production, Staging"
                 , errors = Validation.errorsOf model.formState NameField
-                , disabled = submitting
+                , disabled = isSubmitting model
                 , attributes = [ Form.OnInput NameUpdated ]
                 , id = "new-environment-form-name-input"
                 , hint = Nothing
@@ -266,7 +300,7 @@ view model =
                 { label = "Slug"
                 , placeholder = "Enter your Environment's slug"
                 , errors = Validation.errorsOf model.formState SlugField
-                , disabled = submitting
+                , disabled = isSubmitting model
                 , attributes = [ Form.InputValue model.slug, Form.OnInput SlugUpdated ]
                 , id = "new-environment-form-slug-input"
                 , hint = Just [ text "It's unique inside the project. You will use it to refer to your environment on Slack" ]
@@ -275,7 +309,7 @@ view model =
         envVarsInput =
             Form.KeyValueInput
                 { label = "Environment variables"
-                , disabled = submitting
+                , disabled = isSubmitting model
                 , placeholder = { key = "Key", val = "Value" }
                 , errors = { key = model.editingKeyError, val = Nothing }
                 , id = "new-environment-form-env-vars-input"
@@ -300,19 +334,11 @@ view model =
                 Just e ->
                     [ p [ class "text-red" ] [ text e ] ]
     in
-    Html.form [ class "card", onSubmit Submit ]
-        [ div [ class "card-body" ]
-            ([ Form.input nameInput
-             , Form.input slugInput
-             , copyEnvironment submitting model
-             , Form.input envVarsInput
-             ]
-                ++ error
-            )
-        , div [ class "card-footer text-right" ]
-            [ a
-                [ class "btn btn-link mr-2", href (Route.toUrl (Route.Protected (Route.NewProject (Route.IntegrateWithCI model.projectId)))) ]
-                [ text "Continue to the next step (unsaved data will be lost)" ]
-            , button [ class "btn btn-primary", type_ "submit", disabled submitting ] [ text "Save" ]
-            ]
-        ]
+    div []
+        ([ Form.input nameInput
+         , Form.input slugInput
+         , copyEnvironment model
+         , Form.input envVarsInput
+         ]
+            ++ error
+        )

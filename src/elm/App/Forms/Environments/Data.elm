@@ -1,8 +1,8 @@
-module App.Pages.Projects.New.CreateEnvironments.Data exposing
+module App.Forms.Environments.Data exposing
     ( Environment
     , Project
     , Response
-    , getData
+    , query
     )
 
 import Api
@@ -11,11 +11,14 @@ import Api.Object.Environment as EnvironmentApi
 import Api.Object.Param as ParamApi
 import Api.Object.Project as ProjectApi
 import Api.Query as Query
-import App.Forms.Environments.Data as FormData
 import Dict exposing (Dict)
-import Graphql.Field as Field
+import Graphql.Field as Field exposing (Field)
 import Graphql.Operation exposing (RootQuery)
 import Graphql.SelectionSet exposing (SelectionSet, with)
+
+
+type alias Response =
+    List Project
 
 
 type alias Param =
@@ -25,18 +28,15 @@ type alias Param =
 
 
 type alias Environment =
-    { name : String
+    { id : String
+    , name : String
+    , environmentVars : Dict String String
     }
 
 
 type alias Project =
-    { environments : List Environment
-    }
-
-
-type alias Response =
-    { currentProject : Maybe Project
-    , formData : FormData.Response
+    { name : String
+    , environments : List Environment
     }
 
 
@@ -50,22 +50,21 @@ param =
 environment : SelectionSet Environment Api.Environment
 environment =
     EnvironmentApi.selection Environment
+        |> with EnvironmentApi.id
         |> with EnvironmentApi.name
+        |> with
+            (EnvironmentApi.environmentVariables param
+                |> Field.map Dict.fromList
+            )
 
 
 project : SelectionSet Project Api.Project
 project =
     ProjectApi.selection Project
+        |> with ProjectApi.name
         |> with (ProjectApi.environments environment)
 
 
-query : String -> SelectionSet Response RootQuery
-query projectId =
-    Query.selection Response
-        |> with (Query.project { id = projectId } project)
-        |> with FormData.query
-
-
-getData : String -> String -> String -> (Api.ApiResult Response -> msg) -> Cmd msg
-getData baseUrl token projectId msg =
-    Api.send baseUrl token msg (query projectId)
+query : Field Response RootQuery
+query =
+    Query.projects project
