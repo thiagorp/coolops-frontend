@@ -125,10 +125,7 @@ environmentRow maybeCurrentTime environment =
         , td [] (deploymentCol maybeCurrentTime environment.currentDeployment)
         , td [ class "text-right" ]
             [ a
-                [ class "icon mr-2", href (toUrl (Protected (CopyEnvironment environment.id))) ]
-                [ i [ class "fe fe-copy" ] [] ]
-            , a
-                [ class "icon", href (toUrl (Protected (EditEnvironment environment.id))) ]
+                [ class "icon", title "Edit", href (toUrl (Protected (EditEnvironment environment.id))) ]
                 [ i [ class "fe fe-edit" ] [] ]
             ]
         ]

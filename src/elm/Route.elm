@@ -39,7 +39,6 @@ type ProtectedRoute
     | EditProject String
     | SyncingProject String String
     | NewEnvironment String
-    | CopyEnvironment String
     | EditEnvironment String
 
 
@@ -133,7 +132,6 @@ protectedRouteParser =
         , Url.map EditProject (s "projects" </> string </> s "edit")
         , Url.map NewEnvironment (s "projects" </> string </> s "environments" </> s "new")
         , Url.map EditEnvironment (s "environments" </> string </> s "edit")
-        , Url.map CopyEnvironment (s "environments" </> string </> s "copy")
         , Url.map SyncingProject (s "projects" </> s "syncing" </> string </> string)
         ]
 
@@ -193,6 +191,3 @@ toUrl route =
 
         Protected (EditEnvironment environmentId) ->
             "/environments/" ++ environmentId ++ "/edit"
-
-        Protected (CopyEnvironment environmentId) ->
-            "/environments/" ++ environmentId ++ "/copy"
