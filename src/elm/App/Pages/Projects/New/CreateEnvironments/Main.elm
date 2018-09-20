@@ -7,12 +7,13 @@ module App.Pages.Projects.New.CreateEnvironments.Main exposing
     )
 
 import Api
+import App.Forms.Environments.Main as Form
 import App.Html as AppHtml
 import App.Pages.Projects.New.CreateEnvironments.Data as Data
-import App.Pages.Projects.New.CreateEnvironments.Form as Form
 import App.Pages.ServerError as ServerError
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Route
 import Util exposing (PageHandler, andPerform, noop, return)
 
@@ -74,7 +75,7 @@ update msg model =
                         updateModel subModel =
                             { model | data = Loaded subModel project }
                     in
-                    Form.init model.baseUrl model.apiToken model.projectId response.allProjects
+                    Form.init model.baseUrl model.apiToken model.projectId response.formData
                         |> Util.map updateModel FormMsg
 
                 Nothing ->
@@ -96,12 +97,16 @@ existingEnvironment { name } =
 
 form : Form.Model -> Data.Project -> Html Msg
 form subModel project =
-    div []
-        (List.map existingEnvironment project.environments
-            ++ [ Form.view subModel
-                    |> Html.map FormMsg
-               ]
-        )
+    Html.form [ class "card", onSubmit Form.Submit ]
+        [ div [ class "card-body" ] [ Form.view subModel ]
+        , div [ class "card-footer text-right" ]
+            [ a
+                [ class "btn btn-link mr-2", href (Route.toUrl (Route.Protected (Route.NewProject (Route.IntegrateWithCI subModel.projectId)))) ]
+                [ text "Continue to the next step (unsaved data will be lost)" ]
+            , button [ class "btn btn-primary", type_ "submit", disabled (Form.isSubmitting subModel) ] [ text "Save" ]
+            ]
+        ]
+        |> Html.map FormMsg
 
 
 view : Model -> Html Msg
@@ -117,4 +122,7 @@ view model =
             ServerError.view
 
         Loaded f project ->
-            form f project
+            div []
+                (List.map existingEnvironment project.environments
+                    ++ [ form f project ]
+                )

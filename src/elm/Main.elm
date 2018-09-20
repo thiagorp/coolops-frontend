@@ -38,7 +38,7 @@ type alias Flags =
 type alias Model =
     { page : Page
     , token : Maybe String
-    , navigationKey : Navigation.Key
+    , key : Navigation.Key
     , baseUrl : String
     }
 
@@ -50,7 +50,7 @@ wrapPage toPage toCmd model ( subModel, subCmd ) =
 
 redirectTo : Route.Route -> Model -> ( Model, Cmd Msg )
 redirectTo route model =
-    ( { model | page = Transitioning }, Route.redirectTo model.navigationKey route )
+    ( { model | page = Transitioning }, Route.redirectTo model.key route )
 
 
 handleAppRoute : Model -> Route.ProtectedRoute -> ( Model, Cmd Msg )
@@ -67,7 +67,7 @@ handleAppRoute model route =
                         |> wrapPage App AppMsg model
 
                 _ ->
-                    App.init model.baseUrl token model.navigationKey route
+                    App.init model.baseUrl token model.key route
                         |> wrapPage App AppMsg model
 
 
@@ -97,7 +97,7 @@ handlePublicRoute model route =
                 |> wrapPage Public PublicMsg model
 
         _ ->
-            Public.init model.baseUrl model.navigationKey route
+            Public.init model.baseUrl model.key route
                 |> wrapPage Public PublicMsg model
 
 
@@ -135,7 +135,7 @@ update msg model =
                         Nothing ->
                             Route.authRoot
             in
-            ( { model | token = newToken }, Route.redirectTo model.navigationKey page )
+            ( { model | token = newToken }, Route.redirectTo model.key page )
 
         UrlChanged location ->
             setPage model location
@@ -143,7 +143,7 @@ update msg model =
         LinkClicked urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Navigation.pushUrl model.navigationKey (Url.toString url) )
+                    ( model, Navigation.pushUrl model.key (Url.toString url) )
 
                 Browser.External href ->
                     ( model, Navigation.load href )
