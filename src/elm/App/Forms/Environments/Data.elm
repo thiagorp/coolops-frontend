@@ -2,6 +2,7 @@ module App.Forms.Environments.Data exposing
     ( Environment
     , Project
     , Response
+    , get
     , query
     )
 
@@ -68,3 +69,14 @@ project =
 query : Field Response RootQuery
 query =
     Query.projects project
+
+
+rootQuery : SelectionSet Response RootQuery
+rootQuery =
+    Query.selection identity
+        |> with query
+
+
+get : String -> String -> (Api.ApiResult Response -> msg) -> Cmd msg
+get baseUrl token msg =
+    Api.send baseUrl token msg rootQuery
