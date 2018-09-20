@@ -18,5 +18,5 @@ release:
 
 push: auth_container_registry
 	docker push ${RELEASE_DOCKER_IMG}
-	curl -d '{"name":"${VERSION}","params":{"IMAGE_NAME":"${RELEASE_DOCKER_IMG}"}}' -H "Authorization: Token ${COOLOPS_STAGING_API_TOKEN}" -H "Content-Type: application/json" -X POST -f https://api-staging.coolops.io/builds
-	curl -d '{"name":"${VERSION}","params":{"IMAGE_NAME":"${RELEASE_DOCKER_IMG}"}}' -H "Authorization: Token ${COOLOPS_PRODUCTION_API_TOKEN}" -H "Content-Type: application/json" -X POST -f https://api.coolops.io/builds
+	curl -L https://github.com/coolopsio/coolops/releases/download/v0.1.0/install.sh | sh
+	coolops build:new ${BUILD_NAME} -t ${COOLOPS_PRODUCTION_API_TOKEN} -p DOCKER_IMAGE=${RELEASE_DOCKER_IMG} -m "Job url"="${JOB_URL}"
