@@ -8,7 +8,6 @@ module App.Main exposing
     )
 
 import App.Fragments.Topbar.Main as Topbar
-import App.Pages.Environments.Copy.Main as CopyEnvironment
 import App.Pages.Environments.Edit.Main as EditEnvironment
 import App.Pages.Environments.New.Main as NewEnvironment
 import App.Pages.NotFound as NotFound
@@ -28,7 +27,6 @@ type Msg
     | EditProjectMsg EditProject.Msg
     | NewEnvironmentMsg NewEnvironment.Msg
     | EditEnvironmentMsg EditEnvironment.Msg
-    | CopyEnvironmentMsg CopyEnvironment.Msg
     | TopbarMsg Topbar.Msg
     | SyncingProjectMsg SyncingProject.Msg
 
@@ -38,7 +36,6 @@ type Content
     | NewProject NewProject.Model
     | NewEnvironment NewEnvironment.Model
     | EditEnvironment EditEnvironment.Model
-    | CopyEnvironment CopyEnvironment.Model
     | ProjectsList ProjectsList.Model
     | SyncingProject SyncingProject.Model
     | Loading
@@ -118,10 +115,6 @@ setPage model page =
             EditEnvironment.init model.baseUrl model.apiToken model.navigationKey environmentId
                 |> wrapPage EditEnvironment EditEnvironmentMsg model
 
-        Route.CopyEnvironment environmentId ->
-            CopyEnvironment.init model.baseUrl model.apiToken model.navigationKey environmentId
-                |> wrapPage CopyEnvironment CopyEnvironmentMsg model
-
         Route.SyncingProject code state ->
             SyncingProject.init model.baseUrl model.apiToken model.navigationKey code state
                 |> wrapPage SyncingProject SyncingProjectMsg model
@@ -152,15 +145,6 @@ update msg model =
                 App _ (EditEnvironment subModel) ->
                     EditEnvironment.update subMsg subModel
                         |> wrapPage EditEnvironment EditEnvironmentMsg model
-
-                _ ->
-                    ( model, Cmd.none )
-
-        CopyEnvironmentMsg subMsg ->
-            case model.page of
-                App _ (CopyEnvironment subModel) ->
-                    CopyEnvironment.update subMsg subModel
-                        |> wrapPage CopyEnvironment CopyEnvironmentMsg model
 
                 _ ->
                     ( model, Cmd.none )
@@ -222,10 +206,6 @@ inLayout tobarModel page =
 contentView : Content -> Html.Html Msg
 contentView content =
     case content of
-        CopyEnvironment subModel ->
-            CopyEnvironment.view subModel
-                |> Html.map CopyEnvironmentMsg
-
         EditEnvironment subModel ->
             EditEnvironment.view subModel
                 |> Html.map EditEnvironmentMsg
