@@ -22,25 +22,47 @@ type Msg
 
 
 type alias Model =
-    { baseUrl : String, deploymentId : String, logs : WebData DeploymentLogs, spinnerState : Bool }
+    { baseUrl : String
+    , deploymentId : String
+    , logs : WebData DeploymentLogs
+    , spinnerState : Bool
+    , loadingData : Bool
+    }
+
+
+
+-- Init
 
 
 init : String -> String -> PageHandler Model Msg
 init baseUrl deploymentId =
-    return { baseUrl = baseUrl, deploymentId = deploymentId, logs = Loading, spinnerState = False }
+    return { baseUrl = baseUrl, deploymentId = deploymentId, logs = Loading, spinnerState = False, loadingData = True }
         |> andPerform (getDeploymentLogs baseUrl deploymentId DeploymentLogsResponse)
+
+
+
+-- Update
 
 
 update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
         DeploymentLogsResponse result ->
-            { model | logs = RemoteData.fromResult result }
+            { model | logs = RemoteData.fromResult result, loadingData = False }
                 |> return
 
         Tick _ ->
-            return { model | spinnerState = not model.spinnerState }
-                |> andPerform (getDeploymentLogs model.baseUrl model.deploymentId DeploymentLogsResponse)
+            case model.loadingData of
+                True ->
+                    return { model | spinnerState = not model.spinnerState }
+
+                False ->
+                    return { model | spinnerState = not model.spinnerState, loadingData = True }
+                        |> andPerform (getDeploymentLogs model.baseUrl model.deploymentId DeploymentLogsResponse)
+
+
+
+-- View
 
 
 logsView : DeploymentLogs -> Html Msg
