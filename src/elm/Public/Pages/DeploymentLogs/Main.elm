@@ -44,16 +44,6 @@ init baseUrl deploymentId =
 -- Update
 
 
-updateLog : Model -> Cmd Msg
-updateLog model =
-    case model.loadingData of
-        True ->
-            Cmd.none
-
-        False ->
-            getDeploymentLogs model.baseUrl model.deploymentId DeploymentLogsResponse
-
-
 update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
@@ -62,8 +52,13 @@ update msg model =
                 |> return
 
         Tick _ ->
-            return { model | spinnerState = not model.spinnerState }
-                |> andPerform (updateLog model)
+            case model.loadingData of
+                True ->
+                    return { model | spinnerState = not model.spinnerState }
+
+                False ->
+                    return { model | spinnerState = not model.spinnerState, loadingData = True }
+                        |> andPerform (getDeploymentLogs model.baseUrl model.deploymentId DeploymentLogsResponse)
 
 
 
