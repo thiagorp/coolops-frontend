@@ -87,11 +87,11 @@ update msg model =
                     return model
 
         FormDataLoaded (Ok response) ->
-            Form.init model.baseUrl model.apiToken model.projectId response
+            Form.init model.baseUrl model.apiToken (Form.Create model.projectId) response
                 |> Util.map (setForm model) FormMsg
 
         FormDataLoaded (Err _) ->
-            Form.init model.baseUrl model.apiToken model.projectId []
+            Form.init model.baseUrl model.apiToken (Form.Create model.projectId) []
                 |> Util.map (setForm model) FormMsg
 
 

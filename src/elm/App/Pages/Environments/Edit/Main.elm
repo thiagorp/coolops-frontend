@@ -7,11 +7,13 @@ module App.Pages.Environments.Edit.Main exposing
     )
 
 import Api
+import App.Forms.Environments.Main as Form
 import App.Pages.Environments.Edit.Data as Data
-import App.Pages.Environments.Edit.Form as Form
 import App.Pages.NotFound as NotFound
 import App.Pages.ServerError as ServerError
 import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Route
 import Util as PageUtil exposing (PageHandler, andPerform, noop, return)
 
@@ -34,7 +36,7 @@ type alias Model =
 
 type Msg
     = FormMsg Form.Msg
-    | DataLoaded (Api.ApiResult (Maybe Data.Environment))
+    | DataLoaded (Api.ApiResult Data.Response)
 
 
 init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
@@ -53,24 +55,30 @@ update : Msg -> Model -> PageHandler Model Msg
 update msg model =
     case msg of
         FormMsg subMsg ->
-            case model.page of
-                Form subModel ->
-                    let
-                        ( page, cmd ) =
-                            Form.update subMsg subModel
-                                |> PageUtil.map Form FormMsg
-                    in
-                    ( { model | page = page }, cmd )
+            case subMsg of
+                Form.SubmitResponse (Ok _) ->
+                    return model
+                        |> andPerform (Route.redirectTo model.navigationKey (Route.Protected Route.ProjectsList))
 
                 _ ->
-                    return model
+                    case model.page of
+                        Form subModel ->
+                            let
+                                ( page, cmd ) =
+                                    Form.update subMsg subModel
+                                        |> PageUtil.map Form FormMsg
+                            in
+                            ( { model | page = page }, cmd )
+
+                        _ ->
+                            return model
 
         DataLoaded (Ok response) ->
-            case response of
+            case response.environment of
                 Just environment ->
                     let
                         ( subModel, cmd ) =
-                            Form.init model.baseUrl model.apiToken model.navigationKey environment
+                            Form.init model.baseUrl model.apiToken (Form.Update environment) response.formData
                                 |> PageUtil.map Form FormMsg
                     in
                     ( { model | page = subModel }, cmd )
@@ -95,5 +103,17 @@ view model =
             ServerError.view
 
         Form subModel ->
-            Form.view subModel
-                |> Html.map FormMsg
+            div [ class "container" ]
+                [ div [ class "page-header" ]
+                    [ h1 [ class "page-title" ] [ text ("Edit " ++ subModel.name) ] ]
+                , Html.form [ class "card", onSubmit Form.Submit ]
+                    [ div [ class "card-body" ]
+                        [ Form.view subModel
+                        ]
+                    , div [ class "card-footer text-right" ]
+                        [ button [ type_ "submit", class "btn btn-primary" ]
+                            [ text "Save" ]
+                        ]
+                    ]
+                    |> Html.map FormMsg
+                ]

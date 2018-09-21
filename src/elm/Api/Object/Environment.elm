@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Api.Object.Environment exposing (createdAt, environmentVariables, id, lastDeployment, name, project, selection, updatedAt)
+module Api.Object.Environment exposing (createdAt, environmentVariables, id, lastDeployment, name, project, selection, slug, updatedAt)
 
 import Api.InputObject
 import Api.Interface
@@ -35,6 +35,12 @@ id =
 name : Field String Api.Object.Environment
 name =
     Object.fieldDecoder "name" [] Decode.string
+
+
+{-| -}
+slug : Field String Api.Object.Environment
+slug =
+    Object.fieldDecoder "slug" [] Decode.string
 
 
 {-| -}
