@@ -1,5 +1,6 @@
 module App.Forms.Environments.Main exposing
-    ( Model
+    ( CreateOrUpdate(..)
+    , Model
     , Msg(..)
     , init
     , isSubmitting
@@ -8,6 +9,7 @@ module App.Forms.Environments.Main exposing
     )
 
 import App.Api.CreateEnvironment as Api
+import App.Api.UpdateEnvironment as Api
 import App.Forms.Environments.Data as Data
 import App.Html.Form as Form
 import Dict
@@ -19,6 +21,11 @@ import Http
 import Route
 import Util exposing (PageHandler, andPerform, noop, return)
 import Util.Slug as Slug
+
+
+type Action
+    = ActionCreate
+    | ActionUpdate String
 
 
 type alias Model =
@@ -35,6 +42,7 @@ type alias Model =
     , baseUrl : String
     , projects : List Data.Project
     , selectedEnvToCopy : Maybe Data.Environment
+    , action : Action
     }
 
 
@@ -61,17 +69,52 @@ type Field
 -- Init
 
 
-init : String -> String -> String -> List Data.Project -> PageHandler Model Msg
-init baseUrl apiToken projectId projects =
+type alias Environment a =
+    { a
+        | id : String
+        , name : String
+        , slug : String
+        , environmentVars : Dict.Dict String String
+        , projectId : String
+    }
+
+
+type CreateOrUpdate a
+    = Create String
+    | Update (Environment a)
+
+
+init : String -> String -> CreateOrUpdate a -> List Data.Project -> PageHandler Model Msg
+init baseUrl apiToken actionData projects =
+    let
+        initial =
+            case actionData of
+                Create projectId ->
+                    { name = ""
+                    , slug = ""
+                    , environmentVars = Dict.empty
+                    , projectId = projectId
+                    , action = ActionCreate
+                    }
+
+                Update env ->
+                    { name = env.name
+                    , slug = env.slug
+                    , environmentVars = env.environmentVars
+                    , projectId = env.projectId
+                    , action = ActionUpdate env.id
+                    }
+    in
     return
-        { name = ""
-        , slug = ""
+        { name = initial.name
+        , slug = initial.slug
+        , environmentVars = initial.environmentVars
+        , projectId = initial.projectId
+        , action = initial.action
         , slugModified = False
-        , environmentVars = Dict.empty
         , editingKey = ""
         , editingValue = ""
         , editingKeyError = Nothing
-        , projectId = projectId
         , apiToken = apiToken
         , formState = Validation.initialState
         , baseUrl = baseUrl
@@ -102,8 +145,26 @@ formConfig =
 
 submit : Model -> PageHandler Model Msg
 submit model =
+    let
+        formAction =
+            case model.action of
+                ActionCreate ->
+                    Api.createEnvironment
+                        model.baseUrl
+                        model.apiToken
+                        SubmitResponse
+                        model
+
+                ActionUpdate environmentId ->
+                    Api.updateEnvironment
+                        model.baseUrl
+                        model.apiToken
+                        environmentId
+                        SubmitResponse
+                        model
+    in
     return model
-        |> andPerform (Api.createEnvironment model.baseUrl model.apiToken SubmitResponse model)
+        |> andPerform formAction
 
 
 update : Msg -> Model -> PageHandler Model Msg
@@ -290,7 +351,7 @@ view model =
                 , placeholder = "E.g. Production, Staging"
                 , errors = Validation.errorsOf model.formState NameField
                 , disabled = isSubmitting model
-                , attributes = [ Form.OnInput NameUpdated ]
+                , attributes = [ Form.OnInput NameUpdated, Form.InputValue model.name ]
                 , id = "new-environment-form-name-input"
                 , hint = Nothing
                 }
@@ -301,7 +362,7 @@ view model =
                 , placeholder = "Enter your Environment's slug"
                 , errors = Validation.errorsOf model.formState SlugField
                 , disabled = isSubmitting model
-                , attributes = [ Form.InputValue model.slug, Form.OnInput SlugUpdated ]
+                , attributes = [ Form.OnInput SlugUpdated, Form.InputValue model.slug ]
                 , id = "new-environment-form-slug-input"
                 , hint = Just [ text "It's unique inside the project. You will use it to refer to your environment on Slack" ]
                 }

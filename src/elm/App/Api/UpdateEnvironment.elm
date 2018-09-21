@@ -7,7 +7,7 @@ import Json.Encode as Encode
 
 
 type alias Params a =
-    { a | name : String, environmentVars : Dict String String }
+    { a | name : String, slug : String, environmentVars : Dict String String }
 
 
 encodeEnvVars : Dict String String -> Encode.Value
@@ -21,6 +21,7 @@ encode : Params a -> Encode.Value
 encode params =
     Encode.object
         [ ( "name", Encode.string params.name )
+        , ( "slug", Encode.string params.slug )
         , ( "env_vars", encodeEnvVars params.environmentVars )
         ]
 

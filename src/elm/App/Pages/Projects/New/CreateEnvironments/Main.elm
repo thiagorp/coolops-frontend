@@ -75,7 +75,7 @@ update msg model =
                         updateModel subModel =
                             { model | data = Loaded subModel project }
                     in
-                    Form.init model.baseUrl model.apiToken model.projectId response.formData
+                    Form.init model.baseUrl model.apiToken (Form.Create model.projectId) response.formData
                         |> Util.map updateModel FormMsg
 
                 Nothing ->
