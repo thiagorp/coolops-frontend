@@ -199,7 +199,7 @@ view model =
                     Public.view subModel
                         |> Html.map PublicMsg
     in
-    { title = "CoolOps.io", body = [ body ] }
+    { title = "coolops.io", body = [ body ] }
 
 
 pageSubscriptions : Model -> Sub Msg
