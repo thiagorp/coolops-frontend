@@ -126,7 +126,7 @@ dropdown model =
 logo : Html Msg
 logo =
     a [ class "header-brand", href (Route.toUrl (Route.Protected Route.Home)) ]
-        [ img [ src "logo.svg", alt "coolops", height 32 ] [] ]
+        [ img [ src "/logo.svg", alt "coolops", height 32 ] [] ]
 
 
 view : Model -> Html Msg

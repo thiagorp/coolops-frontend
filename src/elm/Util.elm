@@ -1,4 +1,12 @@
-module Util exposing (PageHandler, andPerform, map, noop, processCmds, return)
+module Util exposing
+    ( PageHandler
+    , andPerform
+    , andPerform_
+    , map
+    , noop
+    , processCmds
+    , return
+    )
 
 
 type alias PageHandler model msg =
@@ -28,6 +36,11 @@ processCmds cmds =
 andPerform : Cmd msg -> PageHandler model msg -> PageHandler model msg
 andPerform newCommand ( model, commands ) =
     ( model, newCommand :: commands )
+
+
+andPerform_ : List (Cmd msg) -> PageHandler model msg -> PageHandler model msg
+andPerform_ newCommands ( model, commands ) =
+    ( model, newCommands ++ commands )
 
 
 map : (subModel -> model) -> (subMsg -> msg) -> PageHandler subModel subMsg -> PageHandler model msg
