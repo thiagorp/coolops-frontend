@@ -7,13 +7,14 @@ import Json.Encode as Encode
 
 
 type alias Params a =
-    { a | name : String, deploymentImage : String }
+    { a | name : String, slug : String, deploymentImage : String }
 
 
 encode : Params a -> Encode.Value
 encode params =
     Encode.object
         [ ( "name", Encode.string params.name )
+        , ( "slug", Encode.string params.slug )
         , ( "deployment_image", Encode.string params.deploymentImage )
         ]
 
