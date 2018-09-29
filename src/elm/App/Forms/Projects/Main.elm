@@ -217,7 +217,7 @@ view model =
                 , placeholder = "E.g. coolopsio/kubernetes:latest"
                 , errors = errorsOf DeploymentImageField
                 , disabled = isSubmitting model
-                , attributes = [ onInput DeploymentImageField, Form.InputValue model.slug ]
+                , attributes = [ onInput DeploymentImageField, Form.InputValue model.deploymentImage ]
                 , id = "new-project-form-deployment-image-input"
                 , hint =
                     Just
