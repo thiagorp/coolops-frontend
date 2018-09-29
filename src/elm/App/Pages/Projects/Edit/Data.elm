@@ -9,6 +9,7 @@ import Api
 import Api.Object as Api
 import Api.Object.Project as ProjectApi
 import Api.Object.SlackConfiguration as SlackConfigurationApi
+import Api.Object.SlackProjectIntegration as SlackProjectIntegrationApi
 import Api.Query as Query
 import Graphql.Operation exposing (RootQuery)
 import Graphql.SelectionSet exposing (SelectionSet, with)
@@ -21,9 +22,15 @@ type alias SlackConfiguration =
 type alias Project =
     { id : String
     , name : String
+    , slug : String
     , deploymentImage : String
     , accessToken : String
+    , slackIntegration : Maybe SlackIntegration
     }
+
+
+type alias SlackIntegration =
+    { workspaceName : String }
 
 
 type alias Response =
@@ -32,13 +39,21 @@ type alias Response =
     }
 
 
+slackIntegration : SelectionSet SlackIntegration Api.SlackProjectIntegration
+slackIntegration =
+    SlackProjectIntegrationApi.selection SlackIntegration
+        |> with SlackProjectIntegrationApi.workspaceName
+
+
 project : SelectionSet Project Api.Project
 project =
     ProjectApi.selection Project
         |> with ProjectApi.id
         |> with ProjectApi.name
+        |> with ProjectApi.slug
         |> with ProjectApi.deploymentImage
         |> with ProjectApi.accessToken
+        |> with (ProjectApi.slackIntegration slackIntegration)
 
 
 slackConfiguration : SelectionSet SlackConfiguration Api.SlackConfiguration

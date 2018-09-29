@@ -251,6 +251,19 @@ subscriptions model =
         NotFound ->
             Sub.none
 
-        App topbarModel _ ->
-            Topbar.subscriptions topbarModel
-                |> Sub.map TopbarMsg
+        App topbarModel contentModel ->
+            let
+                topbarSubscriptions =
+                    Topbar.subscriptions topbarModel
+                        |> Sub.map TopbarMsg
+
+                contentSubscriptions =
+                    case contentModel of
+                        EditProject subModel ->
+                            EditProject.subscriptions subModel
+                                |> Sub.map EditProjectMsg
+
+                        _ ->
+                            Sub.none
+            in
+            Sub.batch [ topbarSubscriptions, contentSubscriptions ]

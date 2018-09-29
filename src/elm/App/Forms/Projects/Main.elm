@@ -1,12 +1,15 @@
 module App.Forms.Projects.Main exposing
-    ( Model
+    ( CreateOrUpdate(..)
+    , Model
     , Msg(..)
     , init
+    , isSubmitting
     , update
     , view
     )
 
 import App.Api.CreateProject as Api
+import App.Api.EditProject as Api
 import App.Html.Form as Form
 import Form.Validation as Validation
 import Html exposing (..)
@@ -17,6 +20,11 @@ import Util exposing (PageHandler, andPerform, noop, return)
 import Util.Slug as Slug
 
 
+type Action
+    = ActionCreate
+    | ActionUpdate String
+
+
 type alias Model =
     { name : String
     , slug : String
@@ -25,6 +33,7 @@ type alias Model =
     , apiToken : String
     , formState : Validation.FormState Field
     , baseUrl : String
+    , action : Action
     }
 
 
@@ -40,13 +49,49 @@ type Msg
     | SubmitResponse (Result Http.Error Api.Project)
 
 
-init : String -> String -> PageHandler Model Msg
-init baseUrl apiToken =
+
+-- Init
+
+
+type alias Project a =
+    { a
+        | id : String
+        , name : String
+        , slug : String
+        , deploymentImage : String
+    }
+
+
+type CreateOrUpdate a
+    = Create
+    | Update (Project a)
+
+
+init : String -> String -> CreateOrUpdate a -> PageHandler Model Msg
+init baseUrl apiToken actionData =
+    let
+        initial =
+            case actionData of
+                Create ->
+                    { name = ""
+                    , slug = ""
+                    , deploymentImage = ""
+                    , action = ActionCreate
+                    }
+
+                Update p ->
+                    { name = p.name
+                    , slug = p.slug
+                    , deploymentImage = p.deploymentImage
+                    , action = ActionUpdate p.id
+                    }
+    in
     return
-        { name = ""
-        , slug = ""
+        { name = initial.name
+        , slug = initial.slug
         , slugModified = False
-        , deploymentImage = ""
+        , deploymentImage = initial.deploymentImage
+        , action = initial.action
         , apiToken = apiToken
         , formState = Validation.initialState
         , baseUrl = baseUrl
@@ -94,8 +139,14 @@ formConfig =
 
 submit : Model -> PageHandler Model Msg
 submit model =
-    return model
-        |> andPerform (Api.createProject model.baseUrl model.apiToken SubmitResponse model)
+    case model.action of
+        ActionCreate ->
+            return model
+                |> andPerform (Api.createProject model.baseUrl model.apiToken SubmitResponse model)
+
+        ActionUpdate projectId ->
+            return model
+                |> andPerform (Api.editProject model.baseUrl model.apiToken projectId SubmitResponse model)
 
 
 update : Msg -> Model -> PageHandler Model Msg
@@ -125,28 +176,30 @@ update msg model =
                 |> return
 
         SubmitResponse (Ok response) ->
-            return model
+            return { model | formState = Validation.initialState }
+
+
+isSubmitting : Model -> Bool
+isSubmitting { formState } =
+    Validation.isSubmitting formState
 
 
 view : Model -> List (Html Msg)
-view { formState, slug } =
+view model =
     let
         onInput =
             Form.OnInput << FieldUpdated
 
         errorsOf =
-            Validation.errorsOf formState
-
-        submitting =
-            Validation.isSubmitting formState
+            Validation.errorsOf model.formState
 
         inputs =
             [ Form.TextInput
                 { label = "Name"
                 , placeholder = "Enter your project's name"
                 , errors = errorsOf NameField
-                , disabled = submitting
-                , attributes = [ onInput NameField ]
+                , disabled = isSubmitting model
+                , attributes = [ onInput NameField, Form.InputValue model.name ]
                 , id = "new-project-form-name-input"
                 , hint = Nothing
                 }
@@ -154,8 +207,8 @@ view { formState, slug } =
                 { label = "Slug"
                 , placeholder = "Enter your project's slug"
                 , errors = errorsOf SlugField
-                , disabled = submitting
-                , attributes = [ onInput SlugField, Form.InputValue slug ]
+                , disabled = isSubmitting model
+                , attributes = [ onInput SlugField, Form.InputValue model.slug ]
                 , id = "new-project-form-slug-input"
                 , hint = Just [ text "You will use this to refer your project on Slack" ]
                 }
@@ -163,8 +216,8 @@ view { formState, slug } =
                 { label = "Deployment image"
                 , placeholder = "E.g. coolopsio/kubernetes:latest"
                 , errors = errorsOf DeploymentImageField
-                , disabled = submitting
-                , attributes = [ onInput DeploymentImageField ]
+                , disabled = isSubmitting model
+                , attributes = [ onInput DeploymentImageField, Form.InputValue model.slug ]
                 , id = "new-project-form-deployment-image-input"
                 , hint =
                     Just
@@ -175,7 +228,7 @@ view { formState, slug } =
             ]
 
         error =
-            case Validation.getServerError formState of
+            case Validation.getServerError model.formState of
                 Nothing ->
                     []
 

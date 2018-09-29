@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Api.Object.Project exposing (accessToken, createdAt, deploymentImage, environments, id, name, selection, slackIntegration, updatedAt)
+module Api.Object.Project exposing (accessToken, createdAt, deploymentImage, environments, id, name, selection, slackIntegration, slug, updatedAt)
 
 import Api.InputObject
 import Api.Interface
@@ -35,6 +35,12 @@ id =
 name : Field String Api.Object.Project
 name =
     Object.fieldDecoder "name" [] Decode.string
+
+
+{-| -}
+slug : Field String Api.Object.Project
+slug =
+    Object.fieldDecoder "slug" [] Decode.string
 
 
 {-| -}

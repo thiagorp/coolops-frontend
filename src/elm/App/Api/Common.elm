@@ -3,6 +3,7 @@ module App.Api.Common exposing
     , delete
     , get
     , patch
+    , patch_
     , post
     , post_
     , publicGet
@@ -74,12 +75,22 @@ post_ baseUrl token path body expect =
 
 post : String -> Token -> String -> Http.Body -> Http.Request ()
 post baseUrl token path body =
+    post_
+        baseUrl
+        token
+        path
+        body
+        (Http.expectStringResponse (\_ -> Ok ()))
+
+
+patch_ : String -> Token -> String -> Http.Body -> Http.Expect a -> Http.Request a
+patch_ baseUrl token path body expect =
     Http.request
-        { method = "POST"
+        { method = "PATCH"
         , headers = [ authHeader token ]
         , url = baseUrl ++ path
         , body = body
-        , expect = Http.expectStringResponse (\_ -> Ok ())
+        , expect = expect
         , timeout = Nothing
         , withCredentials = False
         }
@@ -87,12 +98,9 @@ post baseUrl token path body =
 
 patch : String -> Token -> String -> Http.Body -> Http.Request ()
 patch baseUrl token path body =
-    Http.request
-        { method = "PATCH"
-        , headers = [ authHeader token ]
-        , url = baseUrl ++ path
-        , body = body
-        , expect = Http.expectStringResponse (\_ -> Ok ())
-        , timeout = Nothing
-        , withCredentials = False
-        }
+    patch_
+        baseUrl
+        token
+        path
+        body
+        (Http.expectStringResponse (\_ -> Ok ()))

@@ -29,7 +29,7 @@ init : String -> String -> Route.NavigationKey -> PageHandler Model Msg
 init baseUrl apiToken navigationKey =
     let
         ( formModel, formCmd ) =
-            Form.init baseUrl apiToken
+            Form.init baseUrl apiToken Form.Create
                 |> Util.map identity FormMsg
     in
     return
