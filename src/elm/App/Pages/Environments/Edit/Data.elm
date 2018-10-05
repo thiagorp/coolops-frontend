@@ -71,6 +71,6 @@ query id =
         |> with FormData.query
 
 
-getEnvironment : String -> String -> String -> (Api.ApiResult Response -> msg) -> Cmd msg
-getEnvironment baseUrl token id msg =
-    Api.send baseUrl token msg (query id)
+getEnvironment : Api.ProtectedConfig -> String -> (Api.ApiResult Response -> msg) -> Cmd msg
+getEnvironment apiConfig id msg =
+    Api.sendGraphQL apiConfig msg (query id)

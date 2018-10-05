@@ -1,5 +1,6 @@
 module App.Pages.SyncingProject exposing (Model, Msg(..), init, update, view)
 
+import Api
 import App.Api.ConnectProjectWithSlack exposing (..)
 import Html exposing (..)
 import Http
@@ -17,10 +18,10 @@ type Msg
     = SyncResponse (Result Http.Error ())
 
 
-init : String -> String -> NavigationKey -> String -> String -> PageHandler Model Msg
-init baseUrl apiToken navigationKey code projectId =
+init : Api.ProtectedConfig -> NavigationKey -> String -> String -> PageHandler Model Msg
+init apiConfig navigationKey code projectId =
     return { projectId = projectId, navigationKey = navigationKey }
-        |> andPerform (connectProjectWithSlack baseUrl apiToken SyncResponse { code = code, projectId = projectId })
+        |> andPerform (connectProjectWithSlack apiConfig SyncResponse { code = code, projectId = projectId })
 
 
 update : Msg -> Model -> PageHandler Model Msg

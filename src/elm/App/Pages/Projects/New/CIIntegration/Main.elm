@@ -32,10 +32,10 @@ type alias Model =
     }
 
 
-init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
-init baseUrl apiToken navigationKey projectId =
+init : Api.ProtectedConfig -> Route.NavigationKey -> String -> PageHandler Model Msg
+init apiConfig navigationKey projectId =
     return { project = Loading, navigationKey = navigationKey }
-        |> andPerform (Data.getData baseUrl apiToken projectId ApiResponse)
+        |> andPerform (Data.getData apiConfig projectId ApiResponse)
 
 
 update : Msg -> Model -> PageHandler Model Msg

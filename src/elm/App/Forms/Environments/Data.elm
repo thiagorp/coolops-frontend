@@ -77,6 +77,6 @@ rootQuery =
         |> with query
 
 
-get : String -> String -> (Api.ApiResult Response -> msg) -> Cmd msg
-get baseUrl token msg =
-    Api.send baseUrl token msg rootQuery
+get : Api.ProtectedConfig -> (Api.ApiResult Response -> msg) -> Cmd msg
+get apiConfig msg =
+    Api.sendGraphQL apiConfig msg rootQuery

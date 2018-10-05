@@ -1,6 +1,6 @@
 module App.Api.EditProject exposing (Params, editProject, encode)
 
-import App.Api.Common exposing (..)
+import Api
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -28,7 +28,7 @@ decode =
     Decode.map Project (Decode.field "id" Decode.string)
 
 
-editProject : String -> Token -> String -> (Result Http.Error Project -> msg) -> Params a -> Cmd msg
-editProject baseUrl token projectId msg params =
-    patch_ baseUrl token ("/projects/" ++ projectId) (Http.jsonBody <| encode params) (Http.expectJson decode)
+editProject : Api.ProtectedConfig -> String -> (Result Http.Error Project -> msg) -> Params a -> Cmd msg
+editProject apiConfig projectId msg params =
+    Api.patch_ apiConfig ("/projects/" ++ projectId) (Http.jsonBody <| encode params) (Http.expectJson decode)
         |> Http.send msg

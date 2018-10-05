@@ -25,8 +25,7 @@ type Remote
 
 
 type alias Model =
-    { apiToken : String
-    , baseUrl : String
+    { apiConfig : Api.ProtectedConfig
     , data : Remote
     , projectId : String
     , navigationKey : Route.NavigationKey
@@ -38,16 +37,15 @@ type Msg
     | FormMsg Form.Msg
 
 
-init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
-init baseUrl apiToken navigationKey projectId =
+init : Api.ProtectedConfig -> Route.NavigationKey -> String -> PageHandler Model Msg
+init apiConfig navigationKey projectId =
     return
-        { apiToken = apiToken
-        , baseUrl = baseUrl
+        { apiConfig = apiConfig
         , data = Loading
         , projectId = projectId
         , navigationKey = navigationKey
         }
-        |> andPerform (Data.getData baseUrl apiToken projectId DataLoaded)
+        |> andPerform (Data.getData apiConfig projectId DataLoaded)
 
 
 update : Msg -> Model -> PageHandler Model Msg
@@ -59,7 +57,7 @@ update msg model =
                     case subMsg of
                         Form.SubmitResponse (Ok _) ->
                             return model
-                                |> andPerform (Data.getData model.baseUrl model.apiToken model.projectId DataLoaded)
+                                |> andPerform (Data.getData model.apiConfig model.projectId DataLoaded)
 
                         _ ->
                             Form.update subMsg subModel
@@ -75,7 +73,7 @@ update msg model =
                         updateModel subModel =
                             { model | data = Loaded subModel project }
                     in
-                    Form.init model.baseUrl model.apiToken (Form.Create model.projectId) response.formData
+                    Form.init model.apiConfig (Form.Create model.projectId) response.formData
                         |> Util.map updateModel FormMsg
 
                 Nothing ->

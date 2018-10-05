@@ -29,8 +29,7 @@ type Remote
 
 
 type alias Model =
-    { apiToken : String
-    , baseUrl : String
+    { apiConfig : Api.ProtectedConfig
     , navigationKey : Route.NavigationKey
     , projectId : String
     , form : Remote
@@ -46,16 +45,15 @@ type Msg
 -- Init
 
 
-init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
-init baseUrl apiToken navigationKey projectId =
+init : Api.ProtectedConfig -> Route.NavigationKey -> String -> PageHandler Model Msg
+init apiConfig navigationKey projectId =
     return
-        { apiToken = apiToken
-        , baseUrl = baseUrl
+        { apiConfig = apiConfig
         , navigationKey = navigationKey
         , projectId = projectId
         , form = Loading
         }
-        |> andPerform (FormData.get baseUrl apiToken FormDataLoaded)
+        |> andPerform (FormData.get apiConfig FormDataLoaded)
 
 
 
@@ -87,11 +85,11 @@ update msg model =
                     return model
 
         FormDataLoaded (Ok response) ->
-            Form.init model.baseUrl model.apiToken (Form.Create model.projectId) response
+            Form.init model.apiConfig (Form.Create model.projectId) response
                 |> Util.map (setForm model) FormMsg
 
         FormDataLoaded (Err _) ->
-            Form.init model.baseUrl model.apiToken (Form.Create model.projectId) []
+            Form.init model.apiConfig (Form.Create model.projectId) []
                 |> Util.map (setForm model) FormMsg
 
 

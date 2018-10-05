@@ -6,6 +6,7 @@ module Auth.Pages.Login exposing
     , view
     )
 
+import Api
 import Auth.Api as Api
 import Auth.Layouts.Authentication as AuthenticationLayout
 import Form.Html exposing (..)
@@ -25,17 +26,17 @@ type alias Model =
     { email : String
     , password : String
     , formState : Validation.FormState Field
-    , baseUrl : String
+    , apiConfig : Api.PublicConfig
     }
 
 
-init : String -> PageHandler Model Msg
-init baseUrl =
+init : Api.PublicConfig -> PageHandler Model Msg
+init apiConfig =
     return
         { email = ""
         , password = ""
         , formState = Validation.initialState
-        , baseUrl = baseUrl
+        , apiConfig = apiConfig
         }
 
 
@@ -75,7 +76,7 @@ formConfig =
 login : Model -> PageHandler Model Msg
 login model =
     return model
-        |> andPerform (Api.login model.baseUrl model LoginCallback)
+        |> andPerform (Api.login model.apiConfig model LoginCallback)
 
 
 update : Msg -> Model -> PageHandler Model Msg

@@ -44,6 +44,6 @@ query =
         |> with (Query.me user)
 
 
-getProfile : String -> String -> (Api.ApiResult User -> msg) -> Cmd msg
-getProfile baseUrl token msg =
-    Api.send baseUrl token msg query
+getProfile : Api.ProtectedConfig -> (Api.ApiResult User -> msg) -> Cmd msg
+getProfile apiConfig msg =
+    Api.sendGraphQL apiConfig msg query

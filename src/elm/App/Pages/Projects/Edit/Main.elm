@@ -38,8 +38,7 @@ type Page
 
 type alias Model =
     { page : Page
-    , baseUrl : String
-    , apiToken : String
+    , apiConfig : Api.ProtectedConfig
     , projectId : String
     , navigationKey : Route.NavigationKey
     }
@@ -55,16 +54,15 @@ type Msg
 -- Init
 
 
-init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
-init baseUrl apiToken navigationKey projectId =
+init : Api.ProtectedConfig -> Route.NavigationKey -> String -> PageHandler Model Msg
+init apiConfig navigationKey projectId =
     return
-        { apiToken = apiToken
-        , baseUrl = baseUrl
+        { apiConfig = apiConfig
         , projectId = projectId
         , page = Loading
         , navigationKey = navigationKey
         }
-        |> andPerform (Data.getData baseUrl apiToken projectId DataLoaded)
+        |> andPerform (Data.getData apiConfig projectId DataLoaded)
 
 
 
@@ -103,7 +101,7 @@ update msg model =
         DataLoaded (Ok response) ->
             case response.project of
                 Just project ->
-                    Form.init model.baseUrl model.apiToken (Form.Update project)
+                    Form.init model.apiConfig (Form.Update project)
                         |> PageUtil.map (initLoadedPage response project) FormMsg
 
                 Nothing ->

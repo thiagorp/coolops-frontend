@@ -8,6 +8,7 @@ module App.Forms.Projects.Main exposing
     , view
     )
 
+import Api
 import App.Api.CreateProject as Api
 import App.Api.EditProject as Api
 import App.Html.Form as Form
@@ -30,9 +31,8 @@ type alias Model =
     , slug : String
     , slugModified : Bool
     , deploymentImage : String
-    , apiToken : String
+    , apiConfig : Api.ProtectedConfig
     , formState : Validation.FormState Field
-    , baseUrl : String
     , action : Action
     }
 
@@ -67,8 +67,8 @@ type CreateOrUpdate a
     | Update (Project a)
 
 
-init : String -> String -> CreateOrUpdate a -> PageHandler Model Msg
-init baseUrl apiToken actionData =
+init : Api.ProtectedConfig -> CreateOrUpdate a -> PageHandler Model Msg
+init apiConfig actionData =
     let
         initial =
             case actionData of
@@ -92,9 +92,8 @@ init baseUrl apiToken actionData =
         , slugModified = False
         , deploymentImage = initial.deploymentImage
         , action = initial.action
-        , apiToken = apiToken
+        , apiConfig = apiConfig
         , formState = Validation.initialState
-        , baseUrl = baseUrl
         }
 
 
@@ -142,11 +141,11 @@ submit model =
     case model.action of
         ActionCreate ->
             return model
-                |> andPerform (Api.createProject model.baseUrl model.apiToken SubmitResponse model)
+                |> andPerform (Api.createProject model.apiConfig SubmitResponse model)
 
         ActionUpdate projectId ->
             return model
-                |> andPerform (Api.editProject model.baseUrl model.apiToken projectId SubmitResponse model)
+                |> andPerform (Api.editProject model.apiConfig projectId SubmitResponse model)
 
 
 update : Msg -> Model -> PageHandler Model Msg

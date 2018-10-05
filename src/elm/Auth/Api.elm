@@ -5,6 +5,7 @@ module Auth.Api exposing
     , signup
     )
 
+import Api
 import Http as Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -46,9 +47,9 @@ decodeSignup =
         (Decode.field "user_access_token" Decode.string)
 
 
-signup : String -> SignupRequest a -> (Result Http.Error SignupResponse -> msg) -> Cmd msg
+signup : Api.PublicConfig -> SignupRequest a -> (Result Http.Error SignupResponse -> msg) -> Cmd msg
 signup baseUrl s msg =
-    Http.post (baseUrl ++ "/signup") (Http.stringBody "application/json" <| encodeSignup s) decodeSignup
+    Api.publicPost_ baseUrl "/signup" (Http.stringBody "application/json" <| encodeSignup s) (Http.expectJson decodeSignup)
         |> Http.send msg
 
 
@@ -82,7 +83,7 @@ decodeLogin =
         (Decode.field "access_token" Decode.string)
 
 
-login : String -> LoginRequest a -> (Result Http.Error LoginResponse -> msg) -> Cmd msg
-login baseUrl s msg =
-    Http.post (baseUrl ++ "/tokens") (Http.stringBody "application/json" <| encodeLogin s) decodeLogin
+login : Api.PublicConfig -> LoginRequest a -> (Result Http.Error LoginResponse -> msg) -> Cmd msg
+login apiConfig s msg =
+    Api.publicPost_ apiConfig "/tokens" (Http.stringBody "application/json" <| encodeLogin s) (Http.expectJson decodeLogin)
         |> Http.send msg

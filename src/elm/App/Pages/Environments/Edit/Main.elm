@@ -27,8 +27,7 @@ type Page
 
 type alias Model =
     { page : Page
-    , baseUrl : String
-    , apiToken : String
+    , apiConfig : Api.ProtectedConfig
     , id : String
     , navigationKey : Route.NavigationKey
     }
@@ -39,16 +38,15 @@ type Msg
     | DataLoaded (Api.ApiResult Data.Response)
 
 
-init : String -> String -> Route.NavigationKey -> String -> PageHandler Model Msg
-init baseUrl apiToken navigationKey id =
+init : Api.ProtectedConfig -> Route.NavigationKey -> String -> PageHandler Model Msg
+init apiConfig navigationKey id =
     return
-        { apiToken = apiToken
-        , baseUrl = baseUrl
+        { apiConfig = apiConfig
         , id = id
         , page = Loading
         , navigationKey = navigationKey
         }
-        |> andPerform (Data.getEnvironment baseUrl apiToken id DataLoaded)
+        |> andPerform (Data.getEnvironment apiConfig id DataLoaded)
 
 
 update : Msg -> Model -> PageHandler Model Msg
@@ -78,7 +76,7 @@ update msg model =
                 Just environment ->
                     let
                         ( subModel, cmd ) =
-                            Form.init model.baseUrl model.apiToken (Form.Update environment) response.formData
+                            Form.init model.apiConfig (Form.Update environment) response.formData
                                 |> PageUtil.map Form FormMsg
                     in
                     ( { model | page = subModel }, cmd )

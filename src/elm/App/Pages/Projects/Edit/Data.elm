@@ -69,6 +69,6 @@ query projectId =
         |> with (Query.project { id = projectId } project)
 
 
-getData : String -> String -> String -> (Api.ApiResult Response -> msg) -> Cmd msg
-getData baseUrl token projectId msg =
-    Api.send baseUrl token msg (query projectId)
+getData : Api.ProtectedConfig -> String -> (Api.ApiResult Response -> msg) -> Cmd msg
+getData apiConfig projectId msg =
+    Api.sendGraphQL apiConfig msg (query projectId)

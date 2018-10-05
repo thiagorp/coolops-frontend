@@ -7,6 +7,7 @@ module Public.Main exposing
     , view
     )
 
+import Api
 import Html
 import Public.Pages.DeploymentLogs.Main as DeploymentLogs
 import Public.Pages.SlackCallback as SlackCallback
@@ -27,7 +28,7 @@ type Page
 
 type alias Model =
     { page : Page
-    , baseUrl : String
+    , apiConfig : Api.PublicConfig
     , navigationKey : Route.NavigationKey
     }
 
@@ -56,7 +57,7 @@ setPage : Model -> Route.PublicRoute -> ( Model, Cmd Msg )
 setPage model route =
     case route of
         Route.DeploymentLogs id ->
-            DeploymentLogs.init model.baseUrl id
+            DeploymentLogs.init model.apiConfig id
                 |> wrapPage DeploymentLogs DeploymentLogsMsg model
 
         Route.SlackCallback code state ->
@@ -64,9 +65,9 @@ setPage model route =
                 |> wrapPage SlackCallback SlackCallbackMsg model
 
 
-init : String -> Route.NavigationKey -> Route.PublicRoute -> ( Model, Cmd Msg )
-init baseUrl navigationKey =
-    setPage (Model Transitioning baseUrl navigationKey)
+init : Api.PublicConfig -> Route.NavigationKey -> Route.PublicRoute -> ( Model, Cmd Msg )
+init apiConfig navigationKey =
+    setPage (Model Transitioning apiConfig navigationKey)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

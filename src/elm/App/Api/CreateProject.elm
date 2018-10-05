@@ -1,6 +1,6 @@
 module App.Api.CreateProject exposing (Params, Project, createProject, decode, encode)
 
-import App.Api.Common exposing (..)
+import Api
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -28,7 +28,7 @@ decode =
     Decode.map Project (Decode.field "id" Decode.string)
 
 
-createProject : String -> Token -> (Result Http.Error Project -> msg) -> Params a -> Cmd msg
-createProject baseUrl token msg params =
-    post_ baseUrl token "/projects" (Http.jsonBody <| encode params) (Http.expectJson decode)
+createProject : Api.ProtectedConfig -> (Result Http.Error Project -> msg) -> Params a -> Cmd msg
+createProject apiConfig msg params =
+    Api.post_ apiConfig "/projects" (Http.jsonBody <| encode params) (Http.expectJson decode)
         |> Http.send msg

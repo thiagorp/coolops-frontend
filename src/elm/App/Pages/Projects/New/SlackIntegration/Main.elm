@@ -16,8 +16,7 @@ import Util exposing (PageHandler, andPerform, noop, return)
 
 
 type alias Model =
-    { apiToken : String
-    , baseUrl : String
+    { apiConfig : Api.ProtectedConfig
     , apiData : Api.ApiData Data.Response
     , error : Bool
     , navigationKey : Route.NavigationKey
@@ -28,16 +27,15 @@ type Msg
     = DataLoaded (Api.ApiResult Data.Response)
 
 
-init : String -> String -> Route.NavigationKey -> String -> Bool -> PageHandler Model Msg
-init baseUrl apiToken navigationKey projectId error =
+init : Api.ProtectedConfig -> Route.NavigationKey -> String -> Bool -> PageHandler Model Msg
+init apiConfig navigationKey projectId error =
     return
-        { apiToken = apiToken
-        , baseUrl = baseUrl
+        { apiConfig = apiConfig
         , error = error
         , apiData = Loading
         , navigationKey = navigationKey
         }
-        |> andPerform (Data.getData baseUrl apiToken projectId DataLoaded)
+        |> andPerform (Data.getData apiConfig projectId DataLoaded)
 
 
 update : Msg -> Model -> PageHandler Model Msg

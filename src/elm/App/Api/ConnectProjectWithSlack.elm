@@ -1,6 +1,6 @@
 module App.Api.ConnectProjectWithSlack exposing (Params, connectProjectWithSlack, encode)
 
-import App.Api.Common exposing (..)
+import Api
 import Http
 import Json.Encode as Encode
 
@@ -16,11 +16,10 @@ encode { code } =
         ]
 
 
-connectProjectWithSlack : String -> Token -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
-connectProjectWithSlack baseUrl token msg params =
-    post
-        baseUrl
-        token
+connectProjectWithSlack : Api.ProtectedConfig -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
+connectProjectWithSlack apiConfig msg params =
+    Api.post
+        apiConfig
         ("/projects/" ++ params.projectId ++ "/slack_integration")
         (Http.jsonBody <| encode params)
         |> Http.send msg

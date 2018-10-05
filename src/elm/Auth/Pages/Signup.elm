@@ -6,6 +6,7 @@ module Auth.Pages.Signup exposing
     , view
     )
 
+import Api
 import Auth.Api as Api
 import Auth.Layouts.Authentication as AuthenticationLayout
 import Form.Html exposing (InputAttribute(..), InputType(..))
@@ -29,12 +30,12 @@ type alias Model =
     , password : String
     , companyName : String
     , formState : Validation.FormState Field
-    , baseUrl : String
+    , apiConfig : Api.PublicConfig
     }
 
 
-init : String -> PageHandler Model Msg
-init baseUrl =
+init : Api.PublicConfig -> PageHandler Model Msg
+init apiConfig =
     return
         { firstName = ""
         , lastName = ""
@@ -42,7 +43,7 @@ init baseUrl =
         , password = ""
         , companyName = ""
         , formState = Validation.initialState
-        , baseUrl = baseUrl
+        , apiConfig = apiConfig
         }
 
 
@@ -106,7 +107,7 @@ formConfig =
 signup : Model -> PageHandler Model Msg
 signup model =
     return model
-        |> andPerform (Api.signup model.baseUrl model SignupCallback)
+        |> andPerform (Api.signup model.apiConfig model SignupCallback)
 
 
 update : Msg -> Model -> PageHandler Model Msg
