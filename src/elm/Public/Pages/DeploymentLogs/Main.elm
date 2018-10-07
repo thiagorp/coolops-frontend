@@ -7,6 +7,7 @@ module Public.Pages.DeploymentLogs.Main exposing
     , view
     )
 
+import Api
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http exposing (Error)
@@ -22,7 +23,7 @@ type Msg
 
 
 type alias Model =
-    { baseUrl : String
+    { apiConfig : Api.PublicConfig
     , deploymentId : String
     , logs : WebData DeploymentLogs
     , spinnerState : Bool
@@ -34,10 +35,10 @@ type alias Model =
 -- Init
 
 
-init : String -> String -> PageHandler Model Msg
-init baseUrl deploymentId =
-    return { baseUrl = baseUrl, deploymentId = deploymentId, logs = Loading, spinnerState = False, loadingData = True }
-        |> andPerform (getDeploymentLogs baseUrl deploymentId DeploymentLogsResponse)
+init : Api.PublicConfig -> String -> PageHandler Model Msg
+init apiConfig deploymentId =
+    return { apiConfig = apiConfig, deploymentId = deploymentId, logs = Loading, spinnerState = False, loadingData = True }
+        |> andPerform (getDeploymentLogs apiConfig deploymentId DeploymentLogsResponse)
 
 
 
@@ -58,7 +59,7 @@ update msg model =
 
                 False ->
                     return { model | spinnerState = not model.spinnerState, loadingData = True }
-                        |> andPerform (getDeploymentLogs model.baseUrl model.deploymentId DeploymentLogsResponse)
+                        |> andPerform (getDeploymentLogs model.apiConfig model.deploymentId DeploymentLogsResponse)
 
 
 

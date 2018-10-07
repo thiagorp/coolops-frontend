@@ -92,6 +92,6 @@ query =
         |> with (Query.projects project)
 
 
-listProjects : String -> String -> (Api.ApiResult (List Project) -> msg) -> Cmd msg
-listProjects baseUrl token msg =
-    Api.send baseUrl token msg query
+listProjects : Api.ProtectedConfig -> (Api.ApiResult (List Project) -> msg) -> Cmd msg
+listProjects apiConfig msg =
+    Api.sendGraphQL apiConfig msg query

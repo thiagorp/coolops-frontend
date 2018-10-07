@@ -3,7 +3,7 @@ module Public.Pages.DeploymentLogs.Data exposing
     , getDeploymentLogs
     )
 
-import App.Api.Common exposing (..)
+import Api
 import Http
 import Json.Decode as Decode
 
@@ -19,7 +19,7 @@ decoder =
         (Decode.field "logs" Decode.string)
 
 
-getDeploymentLogs : String -> String -> (Result Http.Error DeploymentLogs -> msg) -> Cmd msg
+getDeploymentLogs : Api.BaseUrl -> String -> (Result Http.Error DeploymentLogs -> msg) -> Cmd msg
 getDeploymentLogs baseUrl deploymentId msg =
-    publicGet baseUrl ("/deployments/" ++ deploymentId ++ "/logs") (Http.expectJson decoder)
+    Api.publicGet baseUrl ("/deployments/" ++ deploymentId ++ "/logs") (Http.expectJson decoder)
         |> Http.send msg

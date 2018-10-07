@@ -6,6 +6,7 @@ module App.Pages.Projects.New.CreateProject.Main exposing
     , view
     )
 
+import Api
 import App.Api.CreateProject as Api
 import App.Forms.Projects.Main as Form
 import Html exposing (..)
@@ -25,11 +26,11 @@ type Msg
     = FormMsg Form.Msg
 
 
-init : String -> String -> Route.NavigationKey -> PageHandler Model Msg
-init baseUrl apiToken navigationKey =
+init : Api.ProtectedConfig -> Route.NavigationKey -> PageHandler Model Msg
+init apiConfig navigationKey =
     let
         ( formModel, formCmd ) =
-            Form.init baseUrl apiToken Form.Create
+            Form.init apiConfig Form.Create
                 |> Util.map identity FormMsg
     in
     return

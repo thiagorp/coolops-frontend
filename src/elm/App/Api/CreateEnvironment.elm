@@ -1,6 +1,6 @@
 module App.Api.CreateEnvironment exposing (Params, createEnvironment, encode, encodeEnvVars)
 
-import App.Api.Common exposing (..)
+import Api
 import Dict exposing (Dict)
 import Http
 import Json.Encode as Encode
@@ -26,7 +26,7 @@ encode params =
         ]
 
 
-createEnvironment : String -> Token -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
-createEnvironment baseUrl token msg params =
-    post baseUrl token ("/projects/" ++ params.projectId ++ "/environments") (Http.jsonBody <| encode params)
+createEnvironment : Api.ProtectedConfig -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
+createEnvironment apiConfig msg params =
+    Api.post apiConfig ("/projects/" ++ params.projectId ++ "/environments") (Http.jsonBody <| encode params)
         |> Http.send msg

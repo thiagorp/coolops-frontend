@@ -21,17 +21,16 @@ import Util exposing (PageHandler, andPerform, noop, return)
 
 type alias Model =
     { projects : ApiData (List Project)
-    , apiToken : String
+    , apiConfig : Api.ProtectedConfig
     , loadedTime : Maybe Time.Posix
-    , baseUrl : String
     }
 
 
-init : String -> String -> PageHandler Model Msg
-init baseUrl apiToken =
-    return { projects = Loading, apiToken = apiToken, loadedTime = Nothing, baseUrl = baseUrl }
+init : Api.ProtectedConfig -> PageHandler Model Msg
+init apiConfig =
+    return { projects = Loading, apiConfig = apiConfig, loadedTime = Nothing }
         |> andPerform (Task.perform TimeLoaded Time.now)
-        |> andPerform (listProjects baseUrl apiToken ProjectsResponse)
+        |> andPerform (listProjects apiConfig ProjectsResponse)
 
 
 type Msg

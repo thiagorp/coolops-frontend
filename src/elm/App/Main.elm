@@ -7,6 +7,7 @@ module App.Main exposing
     , view
     )
 
+import Api
 import App.Fragments.Topbar.Main as Topbar
 import App.Pages.Environments.Edit.Main as EditEnvironment
 import App.Pages.Environments.New.Main as NewEnvironment
@@ -48,8 +49,7 @@ type Page
 
 type alias Model =
     { page : Page
-    , apiToken : String
-    , baseUrl : String
+    , apiConfig : Api.ProtectedConfig
     , navigationKey : Route.NavigationKey
     }
 
@@ -71,7 +71,7 @@ withTopbar model content cmd =
             ( { model | page = App topbar content }, cmd )
 
         NotFound ->
-            Topbar.init model.baseUrl model.apiToken
+            Topbar.init model.apiConfig
                 |> wrapTopbar model content cmd
 
 
@@ -92,37 +92,37 @@ setPage : Model -> Route.ProtectedRoute -> ( Model, Cmd Msg )
 setPage model page =
     case page of
         Route.Home ->
-            ProjectsList.init model.baseUrl model.apiToken
+            ProjectsList.init model.apiConfig
                 |> wrapPage ProjectsList ProjectsListMsg model
 
         Route.ProjectsList ->
-            ProjectsList.init model.baseUrl model.apiToken
+            ProjectsList.init model.apiConfig
                 |> wrapPage ProjectsList ProjectsListMsg model
 
         Route.NewProject step ->
-            NewProject.init model.baseUrl model.apiToken model.navigationKey step
+            NewProject.init model.apiConfig model.navigationKey step
                 |> wrapPage NewProject NewProjectMsg model
 
         Route.EditProject projectId ->
-            EditProject.init model.baseUrl model.apiToken model.navigationKey projectId
+            EditProject.init model.apiConfig model.navigationKey projectId
                 |> wrapPage EditProject EditProjectMsg model
 
         Route.NewEnvironment projectId ->
-            NewEnvironment.init model.baseUrl model.apiToken model.navigationKey projectId
+            NewEnvironment.init model.apiConfig model.navigationKey projectId
                 |> wrapPage NewEnvironment NewEnvironmentMsg model
 
         Route.EditEnvironment environmentId ->
-            EditEnvironment.init model.baseUrl model.apiToken model.navigationKey environmentId
+            EditEnvironment.init model.apiConfig model.navigationKey environmentId
                 |> wrapPage EditEnvironment EditEnvironmentMsg model
 
         Route.SyncingProject code state ->
-            SyncingProject.init model.baseUrl model.apiToken model.navigationKey code state
+            SyncingProject.init model.apiConfig model.navigationKey code state
                 |> wrapPage SyncingProject SyncingProjectMsg model
 
 
-init : String -> String -> Route.NavigationKey -> Route.ProtectedRoute -> ( Model, Cmd Msg )
-init baseUrl apiToken navigationKey =
-    setPage (Model NotFound apiToken baseUrl navigationKey)
+init : Api.ProtectedConfig -> Route.NavigationKey -> Route.ProtectedRoute -> ( Model, Cmd Msg )
+init apiConfig navigationKey =
+    setPage (Model NotFound apiConfig navigationKey)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

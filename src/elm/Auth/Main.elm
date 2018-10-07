@@ -7,6 +7,7 @@ module Auth.Main exposing
     , view
     )
 
+import Api
 import Auth.Pages.Login as Login
 import Auth.Pages.NotFound as NotFound
 import Auth.Pages.Signup as Signup
@@ -27,7 +28,7 @@ type Page
 
 
 type alias Model =
-    { page : Page, baseUrl : String }
+    { page : Page, apiConfig : Api.PublicConfig }
 
 
 wrapPage : (model -> Page) -> (msg -> Msg) -> Model -> ( model, List (Cmd msg) ) -> ( Model, Cmd Msg )
@@ -54,15 +55,15 @@ setPage : Model -> Route.AuthRoute -> ( Model, Cmd Msg )
 setPage model page =
     case page of
         Route.Signup ->
-            wrapPage Signup SignupMsg model (Signup.init model.baseUrl)
+            wrapPage Signup SignupMsg model (Signup.init model.apiConfig)
 
         Route.Login ->
-            wrapPage Login LoginMsg model (Login.init model.baseUrl)
+            wrapPage Login LoginMsg model (Login.init model.apiConfig)
 
 
-init : String -> Route.AuthRoute -> ( Model, Cmd Msg )
-init baseUrl =
-    setPage (Model NotFound baseUrl)
+init : Api.PublicConfig -> Route.AuthRoute -> ( Model, Cmd Msg )
+init apiConfig =
+    setPage (Model NotFound apiConfig)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

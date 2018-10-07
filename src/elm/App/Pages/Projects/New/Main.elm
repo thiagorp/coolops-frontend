@@ -6,6 +6,7 @@ module App.Pages.Projects.New.Main exposing
     , view
     )
 
+import Api
 import App.Html as AppHtml
 import App.Pages.Projects.New.CIIntegration.Main as CIIntegration
 import App.Pages.Projects.New.CreateEnvironments.Main as CreateEnvironments
@@ -36,46 +37,44 @@ type Step
 
 
 type alias Model =
-    { apiToken : String
-    , baseUrl : String
+    { apiConfig : Api.ProtectedConfig
     , step : Step
     }
 
 
-stepFromRoute : String -> String -> Route.NavigationKey -> Route.NewProjectStep -> PageHandler Step Msg
-stepFromRoute baseUrl apiToken navigationKey route =
+stepFromRoute : Api.ProtectedConfig -> Route.NavigationKey -> Route.NewProjectStep -> PageHandler Step Msg
+stepFromRoute apiConfig navigationKey route =
     case route of
         Route.CreateProject ->
-            CreateProject.init baseUrl apiToken navigationKey
+            CreateProject.init apiConfig navigationKey
                 |> Util.map CreateProject CreateProjectMsg
 
         Route.IntegrateWithSlack projectId error ->
-            SlackIntegration.init baseUrl apiToken navigationKey projectId error
+            SlackIntegration.init apiConfig navigationKey projectId error
                 |> Util.map SlackIntegration SlackIntegrationMsg
 
         Route.IntegrateWithSlackCallback projectId code ->
-            SlackIntegrationCallback.init baseUrl apiToken navigationKey code projectId
+            SlackIntegrationCallback.init apiConfig navigationKey code projectId
                 |> Util.map SlackIntegrationCallback SlackIntegrationCallbackMsg
 
         Route.CreateEnvironments projectId ->
-            CreateEnvironments.init baseUrl apiToken navigationKey projectId
+            CreateEnvironments.init apiConfig navigationKey projectId
                 |> Util.map CreateEnvironments CreateEnvironmentsMsg
 
         Route.IntegrateWithCI projectId ->
-            CIIntegration.init baseUrl apiToken navigationKey projectId
+            CIIntegration.init apiConfig navigationKey projectId
                 |> Util.map CIIntegration CIIntegrationMsg
 
 
-init : String -> String -> Route.NavigationKey -> Route.NewProjectStep -> PageHandler Model Msg
-init baseUrl apiToken navigationKey route =
+init : Api.ProtectedConfig -> Route.NavigationKey -> Route.NewProjectStep -> PageHandler Model Msg
+init apiConfig navigationKey route =
     let
         setModel step =
-            { apiToken = apiToken
-            , baseUrl = baseUrl
+            { apiConfig = apiConfig
             , step = step
             }
     in
-    stepFromRoute baseUrl apiToken navigationKey route
+    stepFromRoute apiConfig navigationKey route
         |> Util.map setModel identity
 
 

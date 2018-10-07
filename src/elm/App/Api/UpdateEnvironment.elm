@@ -1,6 +1,6 @@
 module App.Api.UpdateEnvironment exposing (Params, encode, encodeEnvVars, updateEnvironment)
 
-import App.Api.Common exposing (..)
+import Api
 import Dict exposing (Dict)
 import Http
 import Json.Encode as Encode
@@ -26,7 +26,7 @@ encode params =
         ]
 
 
-updateEnvironment : String -> Token -> String -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
-updateEnvironment baseUrl token environmentId msg params =
-    patch baseUrl token ("/environments/" ++ environmentId) (Http.jsonBody <| encode params)
+updateEnvironment : Api.ProtectedConfig -> String -> (Result Http.Error () -> msg) -> Params a -> Cmd msg
+updateEnvironment apiConfig environmentId msg params =
+    Api.patch apiConfig ("/environments/" ++ environmentId) (Http.jsonBody <| encode params)
         |> Http.send msg

@@ -39,10 +39,10 @@ type alias Model =
     }
 
 
-init : String -> String -> PageHandler Model Msg
-init baseUrl apiToken =
+init : Api.ProtectedConfig -> PageHandler Model Msg
+init apiConfig =
     return { dropdownOpened = False, dropdownClickDebouncer = NotTriggered, user = Loading }
-        |> andPerform (Data.getProfile baseUrl apiToken ProfileLoaded)
+        |> andPerform (Data.getProfile apiConfig ProfileLoaded)
 
 
 subscriptions : Model -> Sub Msg

@@ -8,6 +8,7 @@ module App.Forms.Environments.Main exposing
     , view
     )
 
+import Api
 import App.Api.CreateEnvironment as Api
 import App.Api.UpdateEnvironment as Api
 import App.Forms.Environments.Data as Data
@@ -37,9 +38,8 @@ type alias Model =
     , editingValue : String
     , editingKeyError : Maybe (List String)
     , projectId : String
-    , apiToken : String
+    , apiConfig : Api.ProtectedConfig
     , formState : Validation.FormState Field
-    , baseUrl : String
     , projects : List Data.Project
     , selectedEnvToCopy : Maybe Data.Environment
     , action : Action
@@ -84,8 +84,8 @@ type CreateOrUpdate a
     | Update (Environment a)
 
 
-init : String -> String -> CreateOrUpdate a -> List Data.Project -> PageHandler Model Msg
-init baseUrl apiToken actionData projects =
+init : Api.ProtectedConfig -> CreateOrUpdate a -> List Data.Project -> PageHandler Model Msg
+init apiConfig actionData projects =
     let
         initial =
             case actionData of
@@ -115,9 +115,8 @@ init baseUrl apiToken actionData projects =
         , editingKey = ""
         , editingValue = ""
         , editingKeyError = Nothing
-        , apiToken = apiToken
+        , apiConfig = apiConfig
         , formState = Validation.initialState
-        , baseUrl = baseUrl
         , projects = projects
         , selectedEnvToCopy = Nothing
         }
@@ -150,15 +149,13 @@ submit model =
             case model.action of
                 ActionCreate ->
                     Api.createEnvironment
-                        model.baseUrl
-                        model.apiToken
+                        model.apiConfig
                         SubmitResponse
                         model
 
                 ActionUpdate environmentId ->
                     Api.updateEnvironment
-                        model.baseUrl
-                        model.apiToken
+                        model.apiConfig
                         environmentId
                         SubmitResponse
                         model
