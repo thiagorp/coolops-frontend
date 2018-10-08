@@ -188,6 +188,25 @@ content model =
         Loading ->
             spinner
 
+        Success [] ->
+            div [ class "card text-center" ]
+                [ div [ class "card-status bg-primary" ] []
+                , div [ class "card-body p-8" ]
+                    [ div [ class "row" ]
+                        [ div [ class "col-xs-12 col-md-8 offset-md-2" ]
+                            [ h1 [ class "mb-4" ] [ text "Create your first project" ]
+                            , p [ class "lead" ] [ text "Create your first project to get started with coolops.io. We have a nice creation wizzard that will help you through it." ]
+                            , p [ class "mt-6" ]
+                                [ a [ href (toUrl (Protected (NewProject CreateProject))), class "btn btn-primary btn-lg" ]
+                                    [ i [ class "fas fa-plus mr-2" ] []
+                                    , text "Create a project"
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+
         Success projects ->
             List.map (projectView model.loadedTime) projects
                 |> div []
