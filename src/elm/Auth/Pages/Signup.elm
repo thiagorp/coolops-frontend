@@ -90,12 +90,15 @@ formConfig =
         validator =
             Validation.all
                 [ Validation.ifBlank .firstName FirstNameField
+                , Validation.ifShorterThan 3 .firstName FirstNameField
                 , Validation.ifBlank .lastName LastNameField
+                , Validation.ifShorterThan 3 .lastName LastNameField
                 , Validation.ifBlank .email EmailField
                 , Validation.ifInvalidEmail .email EmailField
                 , Validation.ifBlank .password PasswordField
-                , Validation.ifShorterThan 8 .password PasswordField
+                , Validation.ifShorterThan 9 .password PasswordField
                 , Validation.ifBlank .companyName CompanyNameField
+                , Validation.ifShorterThan 3 .companyName CompanyNameField
                 ]
     in
     { validator = validator

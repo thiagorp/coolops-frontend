@@ -100,7 +100,7 @@ boolParam name =
 authRouteParser : Url.Parser (AuthRoute -> a) a
 authRouteParser =
     Url.oneOf
-        [ Url.map Signup (s "__signup__")
+        [ Url.map Signup (s "signup")
         , Url.map Login (s "login")
         ]
 
@@ -140,7 +140,7 @@ toUrl : Route -> String
 toUrl route =
     case route of
         Auth Signup ->
-            "/__signup__"
+            "/signup"
 
         Auth Login ->
             "/login"

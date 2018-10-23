@@ -11,7 +11,8 @@ import Auth.Api as Api
 import Auth.Layouts.Authentication as AuthenticationLayout
 import Form.Html exposing (..)
 import Form.Validation as Validation
-import Html exposing (Html, div, text)
+import Html exposing (Html, a, div, text)
+import Html.Attributes exposing (class, href)
 import Http as Http
 import Ports
 import Route exposing (AuthRoute(..), Route(..), toUrl)
@@ -147,9 +148,8 @@ view model =
     in
     AuthenticationLayout.layout
         [ AuthenticationLayout.form submitting Login "Login" serverError inputs
-
-        -- , div [ class "text-center text-muted" ]
-        -- [ text "Don't have account yet? "
-        -- , a (Auth Signup) LinkClicked [] [ text "Sign up" ]
-        -- ]
+        , div [ class "text-center text-muted" ]
+            [ text "Don't have account yet? "
+            , a [ href (toUrl (Auth Signup)) ] [ text "Sign up" ]
+            ]
         ]
