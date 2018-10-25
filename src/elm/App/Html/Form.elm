@@ -3,6 +3,7 @@ module App.Html.Form exposing
     , InputAttribute(..)
     , input
     , linearCardForm
+    , submitButton
     )
 
 import Dict exposing (Dict)
@@ -29,13 +30,14 @@ type alias TextInputConfig msg =
 
 
 type alias DropdownInputConfig msg =
-    { label : String
-    , options : SelectList { key : String, val : String }
-    , errors : Maybe (List String)
-    , disabled : Bool
+    { disabled : Bool
     , events :
         { onSelect : String -> msg }
+    , errors : Maybe (List String)
     , id : String
+    , hint : Maybe (List (Html.Html msg))
+    , label : String
+    , options : SelectList { key : String, val : String }
     }
 
 
@@ -120,6 +122,24 @@ addErrorClassToInput maybeErrors htmlAttributes =
             htmlAttributes ++ [ Attr.class "is-invalid" ]
 
 
+addHint : Maybe (List (Html.Html msg)) -> Maybe (List String) -> List (Html.Html msg) -> List (Html.Html msg)
+addHint hint errors elems =
+    case hint of
+        Nothing ->
+            elems
+
+        Just hintHtml ->
+            case errors of
+                Nothing ->
+                    elems ++ [ Html.small [ Attr.class "form-text text-muted" ] hintHtml ]
+
+                Just [] ->
+                    elems ++ [ Html.small [ Attr.class "form-text text-muted" ] hintHtml ]
+
+                Just _ ->
+                    elems
+
+
 textInputHtml : String -> TextInputConfig msg -> Html.Html msg
 textInputHtml inputType { label, placeholder, errors, disabled, attributes, id, hint } =
     let
@@ -133,27 +153,11 @@ textInputHtml inputType { label, placeholder, errors, disabled, attributes, id, 
                 |> addAttributesToInput attributes
                 |> addErrorClassToInput errors
 
-        addHint elems =
-            case hint of
-                Nothing ->
-                    elems
-
-                Just hintHtml ->
-                    case errors of
-                        Nothing ->
-                            elems ++ [ Html.small [ Attr.class "form-text text-muted" ] hintHtml ]
-
-                        Just [] ->
-                            elems ++ [ Html.small [ Attr.class "form-text text-muted" ] hintHtml ]
-
-                        Just _ ->
-                            elems
-
         elements =
             [ Html.label [ Attr.class "form-label", Attr.for id ] [ Html.text label ]
             , Html.input inputAttributes []
             ]
-                |> addHint
+                |> addHint hint errors
                 |> addErrorMessageToInput errors
     in
     Html.div [ Attr.class "form-group" ] elements
@@ -173,7 +177,7 @@ dropdownInputHtml config =
                 |> SelectList.toList
 
         dropdownAttributes =
-            [ Attr.class "form-control"
+            [ Attr.class "form-control custom-select"
             , Attr.disabled config.disabled
             , Attr.id config.id
             , Events.onInput config.events.onSelect
@@ -187,6 +191,7 @@ dropdownInputHtml config =
             [ Html.label [ Attr.class "form-label", Attr.for config.id ] [ Html.text config.label ]
             , dropdown
             ]
+                |> addHint config.hint config.errors
                 |> addErrorMessageToInput config.errors
     in
     Html.div [ Attr.class "form-group" ] elements

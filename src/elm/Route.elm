@@ -27,19 +27,18 @@ type alias NavigationKey =
 type NewProjectStep
     = CreateProject
     | IntegrateWithSlack String Bool
-    | IntegrateWithSlackCallback String String
     | CreateEnvironments String
     | IntegrateWithCI String
 
 
 type ProtectedRoute
-    = Home
-    | ProjectsList
-    | NewProject NewProjectStep
+    = EditEnvironment String
     | EditProject String
-    | SyncingProject String String
+    | Home
     | NewEnvironment String
-    | EditEnvironment String
+    | NewProject NewProjectStep
+    | ProjectsList
+    | SlackCallback (Maybe String) (Maybe String)
 
 
 type AuthRoute
@@ -49,7 +48,6 @@ type AuthRoute
 
 type PublicRoute
     = DeploymentLogs String
-    | SlackCallback (Maybe String) (Maybe String)
 
 
 type Route
@@ -109,7 +107,6 @@ publicRouteParser : Url.Parser (PublicRoute -> a) a
 publicRouteParser =
     Url.oneOf
         [ Url.map DeploymentLogs (s "deployments" </> string </> s "logs")
-        , Url.map SlackCallback (s "slack" </> s "callback" <?> Query.string "code" <?> Query.string "state")
         ]
 
 
@@ -118,7 +115,6 @@ newProjectRouteParser =
     Url.oneOf
         [ Url.map CreateProject (s "projects" </> s "new")
         , Url.map IntegrateWithSlack (s "projects" </> s "new" </> string </> s "slack-integration" <?> boolParam "error")
-        , Url.map IntegrateWithSlackCallback (s "projects" </> s "new" </> string </> s "slack-integration" </> string)
         , Url.map CreateEnvironments (s "projects" </> s "new" </> string </> s "create-environments")
         , Url.map IntegrateWithCI (s "projects" </> s "new" </> string </> s "ci-integration")
         ]
@@ -132,7 +128,7 @@ protectedRouteParser =
         , Url.map EditProject (s "projects" </> string </> s "edit")
         , Url.map NewEnvironment (s "projects" </> string </> s "environments" </> s "new")
         , Url.map EditEnvironment (s "environments" </> string </> s "edit")
-        , Url.map SyncingProject (s "projects" </> s "syncing" </> string </> string)
+        , Url.map SlackCallback (s "slack" </> s "callback" <?> Query.string "code" <?> Query.string "state")
         ]
 
 
@@ -148,17 +144,11 @@ toUrl route =
         Public (DeploymentLogs deploymentId) ->
             "/deployments/" ++ deploymentId ++ "/logs"
 
-        Public (SlackCallback _ _) ->
-            "/slack/callback"
-
         Protected Home ->
             "/"
 
         Protected ProjectsList ->
             "/"
-
-        Protected (SyncingProject code projectId) ->
-            "/projects/syncing/" ++ code ++ "/" ++ projectId
 
         Protected (NewProject CreateProject) ->
             "/projects/new"
@@ -174,9 +164,6 @@ toUrl route =
                         ""
                    )
 
-        Protected (NewProject (IntegrateWithSlackCallback projectId code)) ->
-            "/projects/new/" ++ projectId ++ "/slack-integration/" ++ code
-
         Protected (NewProject (CreateEnvironments projectId)) ->
             "/projects/new/" ++ projectId ++ "/create-environments"
 
@@ -191,3 +178,6 @@ toUrl route =
 
         Protected (EditEnvironment environmentId) ->
             "/environments/" ++ environmentId ++ "/edit"
+
+        Protected (SlackCallback _ _) ->
+            "/slack/callback"
