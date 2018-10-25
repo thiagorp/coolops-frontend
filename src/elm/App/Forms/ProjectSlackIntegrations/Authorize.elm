@@ -74,7 +74,7 @@ update msg model =
 
 slackUri : Model -> String
 slackUri { slackClientId, projectId, statePrefix } =
-    "https://slack.com/oauth/authorize?client_id=" ++ slackClientId ++ "&scope=commands,chat:write:bot,bot&single_channel=true&state=" ++ statePrefix ++ projectId
+    "https://slack.com/oauth/authorize?client_id=" ++ slackClientId ++ "&scope=commands,bot&single_channel=true&state=" ++ statePrefix ++ projectId
 
 
 errorLine : Model -> Html msg
