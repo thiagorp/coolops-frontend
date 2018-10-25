@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Api.Query exposing (BuildsOptionalArguments, EnvironmentRequiredArguments, ProjectRequiredArguments, builds, environment, me, project, projects, selection, slackConfiguration)
+module Api.Query exposing (BuildsOptionalArguments, EnvironmentRequiredArguments, ProjectRequiredArguments, builds, environment, me, project, projects, selection, slackAccessToken, slackConfiguration)
 
 import Api.InputObject
 import Api.Interface
@@ -58,6 +58,12 @@ type alias ProjectRequiredArguments =
 project : ProjectRequiredArguments -> SelectionSet decodesTo Api.Object.Project -> Field (Maybe decodesTo) RootQuery
 project requiredArgs object_ =
     Object.selectionField "project" [ Argument.required "id" requiredArgs.id Encode.string ] object_ (identity >> Decode.nullable)
+
+
+{-| -}
+slackAccessToken : SelectionSet decodesTo Api.Object.SlackAccessToken -> Field (Maybe decodesTo) RootQuery
+slackAccessToken object_ =
+    Object.selectionField "slackAccessToken" [] object_ (identity >> Decode.nullable)
 
 
 {-| -}

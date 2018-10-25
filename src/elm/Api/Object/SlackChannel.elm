@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Api.Object.SlackProjectIntegration exposing (channelId, channelName, selection)
+module Api.Object.SlackChannel exposing (id, name, selection)
 
 import Api.InputObject
 import Api.Interface
@@ -20,18 +20,18 @@ import Json.Decode as Decode
 
 {-| Select fields to build up a SelectionSet for this object.
 -}
-selection : (a -> constructor) -> SelectionSet (a -> constructor) Api.Object.SlackProjectIntegration
+selection : (a -> constructor) -> SelectionSet (a -> constructor) Api.Object.SlackChannel
 selection constructor =
     Object.selection constructor
 
 
 {-| -}
-channelId : Field String Api.Object.SlackProjectIntegration
-channelId =
-    Object.fieldDecoder "channelId" [] Decode.string
+name : Field String Api.Object.SlackChannel
+name =
+    Object.fieldDecoder "name" [] Decode.string
 
 
 {-| -}
-channelName : Field String Api.Object.SlackProjectIntegration
-channelName =
-    Object.fieldDecoder "channelName" [] Decode.string
+id : Field String Api.Object.SlackChannel
+id =
+    Object.fieldDecoder "id" [] Decode.string

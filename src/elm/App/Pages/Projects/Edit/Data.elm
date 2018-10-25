@@ -1,6 +1,7 @@
 module App.Pages.Projects.Edit.Data exposing
     ( Project
     , Response
+    , SlackAccessToken
     , SlackConfiguration
     , getData
     )
@@ -8,11 +9,25 @@ module App.Pages.Projects.Edit.Data exposing
 import Api
 import Api.Object as Api
 import Api.Object.Project as ProjectApi
+import Api.Object.SlackAccessToken as SlackAccessTokenApi
+import Api.Object.SlackChannel as SlackChannelApi
 import Api.Object.SlackConfiguration as SlackConfigurationApi
 import Api.Object.SlackProjectIntegration as SlackProjectIntegrationApi
 import Api.Query as Query
 import Graphql.Operation exposing (RootQuery)
 import Graphql.SelectionSet exposing (SelectionSet, with)
+
+
+type alias SlackAccessToken =
+    { teamName : String
+    , channels : List SlackChannel
+    }
+
+
+type alias SlackChannel =
+    { key : String
+    , val : String
+    }
 
 
 type alias SlackConfiguration =
@@ -30,19 +45,34 @@ type alias Project =
 
 
 type alias SlackIntegration =
-    { workspaceName : String }
+    { channelId : String }
 
 
 type alias Response =
     { slackConfiguration : SlackConfiguration
+    , slackAccessToken : Maybe SlackAccessToken
     , project : Maybe Project
     }
+
+
+slackChannel : SelectionSet SlackChannel Api.SlackChannel
+slackChannel =
+    SlackChannelApi.selection SlackChannel
+        |> with SlackChannelApi.id
+        |> with SlackChannelApi.name
+
+
+slackAccessToken : SelectionSet SlackAccessToken Api.SlackAccessToken
+slackAccessToken =
+    SlackAccessTokenApi.selection SlackAccessToken
+        |> with SlackAccessTokenApi.teamName
+        |> with (SlackAccessTokenApi.channels slackChannel)
 
 
 slackIntegration : SelectionSet SlackIntegration Api.SlackProjectIntegration
 slackIntegration =
     SlackProjectIntegrationApi.selection SlackIntegration
-        |> with SlackProjectIntegrationApi.workspaceName
+        |> with SlackProjectIntegrationApi.channelId
 
 
 project : SelectionSet Project Api.Project
@@ -66,6 +96,7 @@ query : String -> SelectionSet Response RootQuery
 query projectId =
     Query.selection Response
         |> with (Query.slackConfiguration slackConfiguration)
+        |> with (Query.slackAccessToken slackAccessToken)
         |> with (Query.project { id = projectId } project)
 
 

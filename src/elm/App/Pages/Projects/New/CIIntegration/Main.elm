@@ -68,10 +68,10 @@ view model =
             div [ class "card" ]
                 [ div [ class "card-body" ]
                     [ h2 [ class "h3" ] [ text "Pro hint" ]
-                    , p [] [ text "If it's your first time integrating with CoolOps, test it on your own terminal beforehand so you get a feeling of what is possible to be done." ]
+                    , p [] [ text "If it's your first time integrating with coolops.io, test it on your own terminal beforehand so you get a feeling of what is possible to be done." ]
                     , h2 [ class "h3 mt-6 mb-4" ] [ text "1. Install the CLI" ]
                     , p []
-                        [ text "CoolOps integrates with any CI workflow. Just follow the steps of our "
+                        [ text "Coolops integrates with any CI workflow. Just follow the steps of our "
                         , a [ href "https://github.com/coolopsio/coolops" ] [ text "command line interface" ]
                         , text "."
                         ]

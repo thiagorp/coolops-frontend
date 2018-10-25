@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Api.Object exposing (Build(..), Company(..), Deployment(..), Environment(..), Param(..), Project(..), SlackConfiguration(..), SlackProjectIntegration(..), User(..))
+module Api.Object exposing (Build(..), Company(..), Deployment(..), Environment(..), Param(..), Project(..), SlackAccessToken(..), SlackChannel(..), SlackConfiguration(..), SlackProjectIntegration(..), User(..))
 
 
 type Build
@@ -27,6 +27,14 @@ type Param
 
 type Project
     = Project
+
+
+type SlackAccessToken
+    = SlackAccessToken
+
+
+type SlackChannel
+    = SlackChannel
 
 
 type SlackConfiguration

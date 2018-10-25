@@ -11,7 +11,6 @@ import App.Html as AppHtml
 import App.Pages.Projects.New.CIIntegration.Main as CIIntegration
 import App.Pages.Projects.New.CreateEnvironments.Main as CreateEnvironments
 import App.Pages.Projects.New.CreateProject.Main as CreateProject
-import App.Pages.Projects.New.SlackIntegration.Callback as SlackIntegrationCallback
 import App.Pages.Projects.New.SlackIntegration.Main as SlackIntegration
 import Components.CheckmarkSteps as CheckmarkSteps
 import Html exposing (..)
@@ -23,7 +22,6 @@ import Util exposing (PageHandler, andPerform, noop, return)
 type Msg
     = CreateProjectMsg CreateProject.Msg
     | SlackIntegrationMsg SlackIntegration.Msg
-    | SlackIntegrationCallbackMsg SlackIntegrationCallback.Msg
     | CreateEnvironmentsMsg CreateEnvironments.Msg
     | CIIntegrationMsg CIIntegration.Msg
 
@@ -31,7 +29,6 @@ type Msg
 type Step
     = CreateProject CreateProject.Model
     | SlackIntegration SlackIntegration.Model
-    | SlackIntegrationCallback SlackIntegrationCallback.Model
     | CreateEnvironments CreateEnvironments.Model
     | CIIntegration CIIntegration.Model
 
@@ -52,10 +49,6 @@ stepFromRoute apiConfig navigationKey route =
         Route.IntegrateWithSlack projectId error ->
             SlackIntegration.init apiConfig navigationKey projectId error
                 |> Util.map SlackIntegration SlackIntegrationMsg
-
-        Route.IntegrateWithSlackCallback projectId code ->
-            SlackIntegrationCallback.init apiConfig navigationKey code projectId
-                |> Util.map SlackIntegrationCallback SlackIntegrationCallbackMsg
 
         Route.CreateEnvironments projectId ->
             CreateEnvironments.init apiConfig navigationKey projectId
@@ -104,15 +97,6 @@ update msg model =
                 _ ->
                     return model
 
-        SlackIntegrationCallbackMsg subMsg ->
-            case model.step of
-                SlackIntegrationCallback subModel ->
-                    SlackIntegrationCallback.update subMsg subModel
-                        |> Util.map (setStep model << SlackIntegrationCallback) SlackIntegrationCallbackMsg
-
-                _ ->
-                    return model
-
         CreateEnvironmentsMsg subMsg ->
             case model.step of
                 CreateEnvironments subModel ->
@@ -143,10 +127,6 @@ form model =
             SlackIntegration.view subModel
                 |> Html.map SlackIntegrationMsg
 
-        SlackIntegrationCallback subModel ->
-            SlackIntegrationCallback.view subModel
-                |> Html.map SlackIntegrationCallbackMsg
-
         CreateEnvironments subModel ->
             CreateEnvironments.view subModel
                 |> Html.map CreateEnvironmentsMsg
@@ -164,9 +144,6 @@ stepTitle step =
 
         SlackIntegration _ ->
             "Integrate with Slack"
-
-        SlackIntegrationCallback _ ->
-            "Integrating with Slack..."
 
         CreateEnvironments _ ->
             "Create environments"
@@ -188,14 +165,6 @@ steps model =
                 ]
 
         SlackIntegration _ ->
-            CheckmarkSteps.Steps
-                [ { text = "Create project" } ]
-                { text = "Integrate with Slack" }
-                [ { text = "Create environments" }
-                , { text = "Integrate with your CI" }
-                ]
-
-        SlackIntegrationCallback _ ->
             CheckmarkSteps.Steps
                 [ { text = "Create project" } ]
                 { text = "Integrate with Slack" }

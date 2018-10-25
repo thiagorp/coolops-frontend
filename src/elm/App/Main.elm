@@ -15,7 +15,7 @@ import App.Pages.NotFound as NotFound
 import App.Pages.Projects.Edit.Main as EditProject
 import App.Pages.Projects.List.Main as ProjectsList
 import App.Pages.Projects.New.Main as NewProject
-import App.Pages.SyncingProject as SyncingProject
+import App.Pages.SlackCallback as SlackCallback
 import Html
 import Route
 import Util
@@ -29,7 +29,7 @@ type Msg
     | NewEnvironmentMsg NewEnvironment.Msg
     | EditEnvironmentMsg EditEnvironment.Msg
     | TopbarMsg Topbar.Msg
-    | SyncingProjectMsg SyncingProject.Msg
+    | SlackCallbackMsg SlackCallback.Msg
 
 
 type Content
@@ -38,7 +38,7 @@ type Content
     | NewEnvironment NewEnvironment.Model
     | EditEnvironment EditEnvironment.Model
     | ProjectsList ProjectsList.Model
-    | SyncingProject SyncingProject.Model
+    | SlackCallback SlackCallback.Model
     | Loading
 
 
@@ -115,9 +115,9 @@ setPage model page =
             EditEnvironment.init model.apiConfig model.navigationKey environmentId
                 |> wrapPage EditEnvironment EditEnvironmentMsg model
 
-        Route.SyncingProject code state ->
-            SyncingProject.init model.apiConfig model.navigationKey code state
-                |> wrapPage SyncingProject SyncingProjectMsg model
+        Route.SlackCallback code state ->
+            SlackCallback.init model.apiConfig model.navigationKey code state
+                |> wrapPage SlackCallback SlackCallbackMsg model
 
 
 init : Api.ProtectedConfig -> Route.NavigationKey -> Route.ProtectedRoute -> ( Model, Cmd Msg )
@@ -176,11 +176,11 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        SyncingProjectMsg subMsg ->
+        SlackCallbackMsg subMsg ->
             case model.page of
-                App _ (SyncingProject subModel) ->
-                    SyncingProject.update subMsg subModel
-                        |> wrapPage SyncingProject SyncingProjectMsg model
+                App _ (SlackCallback subModel) ->
+                    SlackCallback.update subMsg subModel
+                        |> wrapPage SlackCallback SlackCallbackMsg model
 
                 _ ->
                     ( model, Cmd.none )
@@ -226,9 +226,9 @@ contentView content =
             NewEnvironment.view subModel
                 |> Html.map NewEnvironmentMsg
 
-        SyncingProject subModel ->
-            SyncingProject.view subModel
-                |> Html.map SyncingProjectMsg
+        SlackCallback subModel ->
+            SlackCallback.view subModel
+                |> Html.map SlackCallbackMsg
 
         Loading ->
             Html.div [] []
@@ -262,6 +262,10 @@ subscriptions model =
                         EditProject subModel ->
                             EditProject.subscriptions subModel
                                 |> Sub.map EditProjectMsg
+
+                        SlackCallback subModel ->
+                            SlackCallback.subscriptions subModel
+                                |> Sub.map SlackCallbackMsg
 
                         _ ->
                             Sub.none

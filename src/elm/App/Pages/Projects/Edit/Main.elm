@@ -12,6 +12,7 @@ import App.Forms.Projects.Main as Form
 import App.Html as AppHtml
 import App.Pages.NotFound as NotFound
 import App.Pages.Projects.Edit.Data as Data
+import App.Pages.Projects.Edit.SlackSection as SlackSection
 import App.Pages.ServerError as ServerError
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -23,7 +24,7 @@ import Util as PageUtil exposing (PageHandler, andPerform, noop, return)
 
 type alias LoadedData =
     { project : Data.Project
-    , slackConfig : Data.SlackConfiguration
+    , slack : SlackSection.Model
     , formModel : Form.Model
     , showSuccessMessage : Bool
     }
@@ -46,6 +47,7 @@ type alias Model =
 
 type Msg
     = FormMsg Form.Msg
+    | SlackSectionMsg SlackSection.Msg
     | DataLoaded (Api.ApiResult Data.Response)
     | DismissSuccessMessage
 
@@ -75,8 +77,11 @@ update msg model =
         setFormModel pageModel newFormModel =
             { model | page = Loaded { pageModel | formModel = newFormModel } }
 
-        initLoadedPage response project newFormModel =
-            { model | page = Loaded { project = project, slackConfig = response.slackConfiguration, showSuccessMessage = False, formModel = newFormModel } }
+        setSlackModel pageModel newModel =
+            { model | page = Loaded { pageModel | slack = newModel } }
+
+        initLoadedPage slackModel project newFormModel =
+            { model | page = Loaded { project = project, slack = slackModel, showSuccessMessage = False, formModel = newFormModel } }
     in
     case msg of
         FormMsg subMsg ->
@@ -101,8 +106,17 @@ update msg model =
         DataLoaded (Ok response) ->
             case response.project of
                 Just project ->
-                    Form.init model.apiConfig (Form.Update project)
-                        |> PageUtil.map (initLoadedPage response project) FormMsg
+                    let
+                        ( formModel, formCmds ) =
+                            Form.init model.apiConfig (Form.Update project)
+                                |> PageUtil.map identity FormMsg
+
+                        ( slackModel, slackCmds ) =
+                            SlackSection.init model.apiConfig model.navigationKey project response.slackAccessToken response.slackConfiguration False
+                                |> PageUtil.map identity SlackSectionMsg
+                    in
+                    return (initLoadedPage slackModel project formModel)
+                        |> PageUtil.andPerform_ (formCmds ++ slackCmds)
 
                 Nothing ->
                     return { model | page = ProjectNotFound }
@@ -118,43 +132,24 @@ update msg model =
         DataLoaded (Err _) ->
             return { model | page = ApiError }
 
+        SlackSectionMsg subMsg ->
+            case model.page of
+                Loaded data ->
+                    SlackSection.update subMsg data.slack
+                        |> PageUtil.map (setSlackModel data) SlackSectionMsg
+
+                _ ->
+                    return model
+
 
 
 -- View
 
 
-slackIntegrationBody : Data.SlackConfiguration -> Data.Project -> List (Html Msg)
-slackIntegrationBody slackConfig project =
-    let
-        slackLink =
-            "https://slack.com/oauth/authorize?client_id=" ++ slackConfig.clientId ++ "&scope=chat:write,commands&single_channel=true&state=" ++ project.id
-    in
-    case project.slackIntegration of
-        Nothing ->
-            [ a [ href slackLink ]
-                [ img
-                    [ alt "Add to Slack"
-                    , src "https://platform.slack-edge.com/img/add_to_slack.png"
-                    , attribute "srcset" "https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"
-                    ]
-                    []
-                ]
-            ]
-
-        Just integration ->
-            [ p [] [ text "The project is integrated with: ", strong [] [ text integration.workspaceName ] ]
-            , div [] [ a [ href slackLink, class "btn btn-outline-primary btn-sm" ] [ text "Redo the integration" ] ]
-            ]
-
-
-slackIntegration : Data.SlackConfiguration -> Data.Project -> Html Msg
-slackIntegration slackConfig project =
-    div [ class "card" ]
-        [ div [ class "card-header" ]
-            [ h3 [ class "card-title" ] [ text "Slack integration" ]
-            ]
-        , div [ class "card-body" ] (slackIntegrationBody slackConfig project)
-        ]
+slackIntegration : SlackSection.Model -> Html Msg
+slackIntegration subModel =
+    SlackSection.view subModel
+        |> Html.map SlackSectionMsg
 
 
 ciIntegration : Data.Project -> Html Msg
@@ -215,7 +210,7 @@ view model =
                     [ div [ class "col-lg-7 col-xs-12" ]
                         [ projectForm data ]
                     , div [ class "col-lg-5 col-xs-12" ]
-                        [ slackIntegration data.slackConfig data.project
+                        [ slackIntegration data.slack
                         , ciIntegration data.project
                         ]
                     ]
@@ -230,12 +225,20 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.page of
         Loaded data ->
-            case data.showSuccessMessage of
-                True ->
-                    Time.every (5 * 1000) (\_ -> DismissSuccessMessage)
+            let
+                pageSub =
+                    case data.showSuccessMessage of
+                        True ->
+                            Time.every (5 * 1000) (\_ -> DismissSuccessMessage)
 
-                False ->
-                    Sub.none
+                        False ->
+                            Sub.none
+
+                slackSub =
+                    SlackSection.subscriptions data.slack
+                        |> Sub.map SlackSectionMsg
+            in
+            Sub.batch [ pageSub, slackSub ]
 
         _ ->
             Sub.none
