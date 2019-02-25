@@ -23,12 +23,12 @@ type alias Project =
     { id : String }
 
 
-decode : Decode.Decoder Project
-decode =
-    Decode.map Project (Decode.field "id" Decode.string)
+parseResponse : String -> Http.Response String -> Result String Project
+parseResponse projectId _ =
+    Ok { id = projectId }
 
 
 editProject : Api.ProtectedConfig -> String -> (Result Http.Error Project -> msg) -> Params a -> Cmd msg
 editProject apiConfig projectId msg params =
-    Api.patch_ apiConfig ("/projects/" ++ projectId) (Http.jsonBody <| encode params) (Http.expectJson decode)
+    Api.patch_ apiConfig ("/projects/" ++ projectId) (Http.jsonBody <| encode params) (Http.expectStringResponse (parseResponse projectId))
         |> Http.send msg
