@@ -72,6 +72,7 @@ logsView { logs } =
         [ style "backgroundColor" "#212121"
         , style "color" "#edede3"
         , style "marginTop" "30px"
+        , style "textShadow" "none"
         ]
         [ text logs ]
 
