@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: coolopsio/api-buildbase:latest
+      - image: coolopsio/app-buildbase:latest
     steps:
       - checkout
       - setup_remote_docker:
